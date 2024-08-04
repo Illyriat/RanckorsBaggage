@@ -7,7 +7,6 @@
 ## SavedVariables: RanckorsBaggageSavedVars
 
 RanckorsBaggage.lua
-RanckorsBaggage.xml
 
 
 ## This Add-on is not created by, affiliated with or sponsored by ZeniMax Media Inc. or its affiliates.

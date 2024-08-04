@@ -1,12 +1,17 @@
 # Ranckors Baggage
-## View your currenices in a convenitent UI panel without having to navigate through your inventory menus.
+### View your currenices in a convenitent UI panel without having to navigate through your inventory menus.
 
-## Movable panel can be placed where it is most suitable for the player and then saved to the new position.
+### Movable panel can be placed where it is most suitable for the player and then saved to the new position.
 
+### /rb - Hide/Show UI
+### /rbclear - Clear Background Option
+### /rbdark - Dark Backgorund Option
 
 ![Closeup Image](./images/RBaggageCloseUp.JPG)
 
 ![Full Screen Image](./images/RBaggageFull.JPG)
+
+![DarkMode Image](./images/RBDarkMode.JPG)
 
 
 

@@ -7,27 +7,29 @@ local RanckorsBaggage = {}
 
 -- Define the default saved variables
 RanckorsBaggage.defaults = {
-    position = { x = 0, y = 100 }  -- Default position if no saved variables exist
+    position = { x = 0, y = 100 },  -- Default position if no saved variables exist
+    backgroundStyle = "clear"       -- Default background style
 }
 
 -- Initialize function
-    function RanckorsBaggage:Initialize()
-        d("Initializing RanckorsBaggage...")
-        
-        -- Create and initialize the UI
-        self:CreateUI()
+function RanckorsBaggage:Initialize()
+    d("Initializing RanckorsBaggage...")
     
-        -- Register for events
-        EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_PLAYER_ACTIVATED, function(event) self:OnPlayerActivated(event) end)
-        EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_CURRENCY_UPDATE, function(event, ...) self:OnCurrencyUpdate(event, ...) end)
-        EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_INVENTORY_SINGLE_SLOT_UPDATE, function(event, ...) self:OnInventoryUpdate(event, ...) end)
-        EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ACTION_LAYER_PUSHED, function(event, layerIndex, activeLayerIndex) self:OnActionLayerPushed(event, layerIndex, activeLayerIndex) end)
-        EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ACTION_LAYER_POPPED, function(event, layerIndex, activeLayerIndex) self:OnActionLayerPopped(event, layerIndex, activeLayerIndex) end)
-        
-        -- Register slash commands
-        SLASH_COMMANDS["/rb"] = function() self:ToggleWindow() end
-    end
+    -- Create and initialize the UI
+    self:CreateUI()
+
+    -- Register for events
+    EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_PLAYER_ACTIVATED, function(event) self:OnPlayerActivated(event) end)
+    EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_CURRENCY_UPDATE, function(event, ...) self:OnCurrencyUpdate(event, ...) end)
+    EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_INVENTORY_SINGLE_SLOT_UPDATE, function(event, ...) self:OnInventoryUpdate(event, ...) end)
+    EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ACTION_LAYER_PUSHED, function(event, layerIndex, activeLayerIndex) self:OnActionLayerPushed(event, layerIndex, activeLayerIndex) end)
+    EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ACTION_LAYER_POPPED, function(event, layerIndex, activeLayerIndex) self:OnActionLayerPopped(event, layerIndex, activeLayerIndex) end)
     
+    -- Register slash commands
+    SLASH_COMMANDS["/rb"] = function() self:ToggleWindow() end
+    SLASH_COMMANDS["/rbclear"] = function() self:SetBackgroundStyle("clear") end
+    SLASH_COMMANDS["/rbdark"] = function() self:SetBackgroundStyle("dark") end
+end
 
 -- Function to create UI
 function RanckorsBaggage:CreateUI()
@@ -36,21 +38,19 @@ function RanckorsBaggage:CreateUI()
     if not RanckorsBaggageWindow then
         -- Create the main window
         RanckorsBaggageWindow = WINDOW_MANAGER:CreateTopLevelWindow("RanckorsBaggageWindow")
-        RanckorsBaggageWindow:SetDimensions(300, 300)
+        RanckorsBaggageWindow:SetDimensions(300, 400) -- Increased height
         RanckorsBaggageWindow:SetMovable(true)
         RanckorsBaggageWindow:SetMouseEnabled(true)
         RanckorsBaggageWindow:SetClampedToScreen(true)
 
         -- Create the background
-        local background = WINDOW_MANAGER:CreateControl("RanckorsBaggageWindowBG", RanckorsBaggageWindow, CT_BACKDROP)
+        local background = WINDOW_MANAGER:CreateControl("$(parent)BG", RanckorsBaggageWindow, CT_BACKDROP)
         background:SetAnchorFill(RanckorsBaggageWindow)
-        background:SetCenterColor(0, 0, 0, 0)
-        background:SetEdgeColor(0, 0, 0, 0)
-        background:SetEdgeTexture("", 0, 0, 0)
+        self:ApplyBackgroundStyle(background) -- Apply the current background style
 
         -- Create the label to display the information
-        RanckorsBaggage.RanckorsBaggageWindowLabel = WINDOW_MANAGER:CreateControl("RanckorsBaggageWindowLabel", RanckorsBaggageWindow, CT_LABEL)
-        RanckorsBaggage.RanckorsBaggageWindowLabel:SetDimensions(300, 300)
+        RanckorsBaggage.RanckorsBaggageWindowLabel = WINDOW_MANAGER:CreateControl("$(parent)Label", RanckorsBaggageWindow, CT_LABEL)
+        RanckorsBaggage.RanckorsBaggageWindowLabel:SetDimensions(280, 380) -- Slightly smaller than the window for padding
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 10)
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetFont("ZoFontGameLarge")
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetColor(1, 1, 1, 1)
@@ -62,7 +62,37 @@ function RanckorsBaggage:CreateUI()
             self:SavePosition()
         end)
     end
+end
 
+-- Function to apply the background style
+function RanckorsBaggage:ApplyBackgroundStyle(background)
+    if not background then
+        d("Error: Background control is nil.")
+        return
+    end
+
+    if self.savedVariables.backgroundStyle == "clear" then
+        background:SetCenterColor(0, 0, 0, 0) -- Fully transparent background
+        background:SetEdgeColor(0, 0, 0, 0)   -- Fully transparent edges
+    else
+        background:SetCenterColor(0.1, 0.1, 0.1, 0.7) -- Darker background
+        background:SetEdgeColor(0.1, 0.1, 0.1, 1)     -- Visible edges
+    end
+end
+
+-- Function to set the background style
+function RanckorsBaggage:SetBackgroundStyle(style)
+    self.savedVariables.backgroundStyle = style
+    if IsValidRanckorsBaggageWindow() then
+        local background = RanckorsBaggageWindow:GetNamedChild("BG")
+        if background then
+            self:ApplyBackgroundStyle(background)
+            d("Background style set to " .. style)
+        else
+            d("Error: Background control not found.")
+        end
+    end
+end
 
 -- Removes the addon from view when opening a menu such as Map, B
 -- Event handler for action layer pushed (UI layer opened)
@@ -82,12 +112,6 @@ function RanckorsBaggage:OnActionLayerPopped(event, layerIndex, activeLayerIndex
         end
     end
 end
-
-
-
--- Restore the saved position
-self:RestorePosition()
-    end
 
 -- Function to restore saved position
 function RanckorsBaggage:RestorePosition()
@@ -125,17 +149,18 @@ function RanckorsBaggage:UpdateCurrencyData()
     self.crowns = GetCurrencyAmount(CURT_CROWNS, CURRENCY_LOCATION_ACCOUNT)
     self.currentBagSpace = GetNumBagUsedSlots(BAG_BACKPACK)
     self.maxBagSpace = GetBagSize(BAG_BACKPACK)
+    
     -- Bank information
     local currentBankSpace = GetNumBagUsedSlots(BAG_BANK)
     local maxBankSpace = GetBagUseableSize(BAG_BANK)
+    
     -- Subscribers Bank Information 
     local currentSubBankSpace = GetNumBagUsedSlots(BAG_SUBSCRIBER_BANK)
     local maxSubBankSpace = GetBagSize(BAG_SUBSCRIBER_BANK)
+    
     -- Combine Both 
     self.combinedBankUsedSpace = currentBankSpace + currentSubBankSpace
-    self.combinedMaxBankSpace =
-     maxBankSpace + maxSubBankSpace
-    
+    self.combinedMaxBankSpace = maxBankSpace + maxSubBankSpace
 
     -- Determine the max transmute crystals based on subscription status
     if IsESOPlusSubscriber() then
@@ -143,7 +168,6 @@ function RanckorsBaggage:UpdateCurrencyData()
     else
         self.maxTransmuteCrystals = 500
     end
-
 end
 
 -- Function to format numbers with commas
@@ -157,6 +181,7 @@ function RanckorsBaggage:UpdateUI()
         return
     end
 
+    -- Set default colors
     local goldColour = "|cFFD700"
     local apColour = "|c50C878"
     local telVarColour = "|cADD8E6"
@@ -164,14 +189,47 @@ function RanckorsBaggage:UpdateUI()
     local undauntedColour = "|cB5A642"
     local transmuteColour = "|c8A2BE2"
     local crownGemsColour = "|ce883e8"
-    local sealsColour = "|c2424BB" 
+    local sealsColour = "|c87CEEB"  -- Lighter blue color for visibility
     local writVoucherColour = "|cFFA500"
     local archivalFortunesColour = "|c800080"
     local crownsColour = "|cFFFF00"
     local bagColour = "|cFFFFFF"
     local bankColour = "|cFFFFFF"
 
-    local infoText = string.format("%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n%s|t24:24:/esoui/art/currency/icon_eventticket_loot.dds|t %s/12|r\n%s|t24:24:/esoui/art/currency/undauntedkey.dds|t %s|r\n%s|t24:24:/esoui/art/currency/currency_seedcrystal_32.dds|t %s/%s|r\n%s|t24:24:/esoui/art/currency/currency_crown_gems.dds|t %s|r\n%s|t24:24:/esoui/art/currency/currency_seals_of_endeavor_32.dds|t %s|r\n%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n%s|t24:24:/esoui/art/currency/archivalfragments_32.dds|t %s|r\n%s|t24:24:/esoui/art/icons/store_crowns.dds|t %s|r\n%s|t24:24:/esoui/art/tooltips/icon_bag.dds|t %d/%d|r\n%s|t24:24:/esoui/art/icons/servicemappins/servicepin_bank.dds|t %s/%s|r",
+    -- Calculate bag space usage percentage
+    local bagUsagePercentage = (self.currentBagSpace / self.maxBagSpace) * 100
+
+    -- Calculate bank space usage percentage
+    local bankUsagePercentage = (self.combinedBankUsedSpace / self.combinedMaxBankSpace) * 100
+
+    -- Set bag color based on usage
+    if bagUsagePercentage >= 95 then
+        bagColour = "|cFF0000"  -- Red
+    elseif bagUsagePercentage >= 90 then
+        bagColour = "|cFFA500"  -- Amber (Orange)
+    end
+
+    -- Set bank color based on usage
+    if bankUsagePercentage >= 95 then
+        bankColour = "|cFF0000"  -- Red
+    elseif bankUsagePercentage >= 90 then
+        bankColour = "|cFFA500"  -- Amber (Orange)
+    end
+
+    local infoText = string.format(
+        "%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/icon_eventticket_loot.dds|t %s/12|r\n" ..
+        "%s|t24:24:/esoui/art/currency/undauntedkey.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/currency_seedcrystal_32.dds|t %s/%s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/currency_crown_gems.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/currency_seals_of_endeavor_32.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/archivalfragments_32.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/icons/store_crowns.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/tooltips/icon_bag.dds|t %d/%d|r\n" ..
+        "%s|t24:24:/esoui/art/icons/servicemappins/servicepin_bank.dds|t %s/%s|r",
         goldColour, self:FormatNumberWithCommas(self.gold),
         apColour, self:FormatNumberWithCommas(self.alliancePoints),
         telVarColour, self:FormatNumberWithCommas(self.telVar),
@@ -184,7 +242,8 @@ function RanckorsBaggage:UpdateUI()
         archivalFortunesColour, self:FormatNumberWithCommas(self.archivalFortunes),
         crownsColour, self:FormatNumberWithCommas(self.crowns),
         bagColour, self.currentBagSpace, self.maxBagSpace,
-        bankColour, self.combinedBankUsedSpace, self.combinedMaxBankSpace)
+        bankColour, self.combinedBankUsedSpace, self.combinedMaxBankSpace
+    )
 
     if RanckorsBaggage.RanckorsBaggageWindowLabel then
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetText(infoText)
@@ -197,7 +256,6 @@ end
 function IsValidRanckorsBaggageWindow()
     return RanckorsBaggageWindow and RanckorsBaggage.RanckorsBaggageWindowLabel and RanckorsBaggageWindow.SetHidden
 end
-
 
 -- Function to toggle the window visibility
 function RanckorsBaggage:ToggleWindow()
@@ -219,6 +277,9 @@ function RanckorsBaggage:OnPlayerActivated(event)
     -- Update the currency data and UI
     self:UpdateCurrencyData()
     self:UpdateUI()
+
+    -- Restore the saved position
+    self:RestorePosition()
 end
 
 -- Event handler for currency update
