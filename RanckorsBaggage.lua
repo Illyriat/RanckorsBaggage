@@ -32,26 +32,41 @@ function RanckorsBaggage:Initialize()
 end
 
 -- Function to create UI
+-- Function to create UI
 function RanckorsBaggage:CreateUI()
     d("Creating UI...")
 
     if not RanckorsBaggageWindow then
-        -- Create the main window
+        -- Create the main window with a larger height
         RanckorsBaggageWindow = WINDOW_MANAGER:CreateTopLevelWindow("RanckorsBaggageWindow")
-        RanckorsBaggageWindow:SetDimensions(300, 400) -- Increased height
+        RanckorsBaggageWindow:SetDimensions(300, 520) -- Adjusted height to fit all info
         RanckorsBaggageWindow:SetMovable(true)
         RanckorsBaggageWindow:SetMouseEnabled(true)
         RanckorsBaggageWindow:SetClampedToScreen(true)
 
-        -- Create the background
+        -- Create the background and set it to fill the window dynamically
         local background = WINDOW_MANAGER:CreateControl("$(parent)BG", RanckorsBaggageWindow, CT_BACKDROP)
         background:SetAnchorFill(RanckorsBaggageWindow)
         self:ApplyBackgroundStyle(background) -- Apply the current background style
 
-        -- Create the label to display the information
+        -- Create a label for the clickable link at the top
+        RanckorsBaggage.RanckorsBaggageWindowLink = WINDOW_MANAGER:CreateControl("$(parent)Link", RanckorsBaggageWindow, CT_LABEL)
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetDimensions(280, 24) -- Adjust dimensions as needed
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 5) -- Positioned at the very top
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetFont("ZoFontGameSmall")
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetColor(0, 0.7, 1, 1) -- Link color (light blue)
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|u1:0::RanckorsBaggage|u") -- Text with underline effect
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetMouseEnabled(true)
+
+        -- Click handler to open website
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetHandler("OnMouseUp", function()
+            RequestOpenUnsafeURL("https://james-robson.dev/") -- Replace with the actual URL
+        end)
+
+        -- Create the label to display the information, positioned below the link
         RanckorsBaggage.RanckorsBaggageWindowLabel = WINDOW_MANAGER:CreateControl("$(parent)Label", RanckorsBaggageWindow, CT_LABEL)
-        RanckorsBaggage.RanckorsBaggageWindowLabel:SetDimensions(280, 380) -- Slightly smaller than the window for padding
-        RanckorsBaggage.RanckorsBaggageWindowLabel:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 10)
+        RanckorsBaggage.RanckorsBaggageWindowLabel:SetDimensions(280, 480) -- Adjusted to match new window height
+        RanckorsBaggage.RanckorsBaggageWindowLabel:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 35) -- Positioned lower to avoid overlap
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetFont("ZoFontGameLarge")
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetColor(1, 1, 1, 1)
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
@@ -63,6 +78,8 @@ function RanckorsBaggage:CreateUI()
         end)
     end
 end
+
+
 
 -- Function to apply the background style
 function RanckorsBaggage:ApplyBackgroundStyle(background)
@@ -134,21 +151,69 @@ function RanckorsBaggage:SavePosition()
     end
 end
 
+-- Table to map currency types to human-readable names
+local CURRENCY_NAMES = {
+    [CURT_MONEY] = "Gold",
+    [CURT_ALLIANCE_POINTS] = "Alliance Points",
+    [CURT_TELVAR_STONES] = "Tel Var Stones",
+    [CURT_EVENT_TICKETS] = "Event Tickets",
+    [CURT_UNDAUNTED_KEYS] = "Undaunted Keys",
+    [CURT_CHAOTIC_CREATIA] = "Transmute Crystals",
+    [CURT_CROWN_GEMS] = "Crown Gems",
+    [CURT_IMPERIAL_FRAGMENTS] = "Imperial Fragments",
+    [CURT_ENDEAVOR_SEALS] = "Seals of Endeavor",
+    [CURT_WRIT_VOUCHERS] = "Writ Vouchers",
+    [CURT_ARCHIVAL_FORTUNES] = "Archival Fortunes",
+    [CURT_CROWNS] = "Crowns"
+}
+
+-- Helper function to safely get a currency amount or return nil if invalid
+RanckorsBaggage.hasShownCurrencyWarning = false
+
+function RanckorsBaggage:GetCurrencySafely(currencyType, currencyLocation)
+    local currencyName = CURRENCY_NAMES[currencyType] or "Unknown Currency"
+    
+    -- Only show warning message on login or ReloadUI and only once
+    if not self.hasShownCurrencyWarning then
+        if not CURRENCY_NAMES[currencyType] then
+            d("RanckorsBaggage - Warning: Invalid currency type " .. currencyName .. " (" .. tostring(currencyType) .. ")")
+            self.hasShownCurrencyWarning = true -- Set flag to avoid repeating the warning
+            return nil
+        end
+    end
+
+    local amount = GetCurrencyAmount(currencyType, currencyLocation)
+    if amount == 0 and not self.hasShownCurrencyWarning then
+        d("RanckorsBaggage - Warning: " .. currencyName .. " returned 0. Verify if this is correct.")
+        self.hasShownCurrencyWarning = true -- Set flag after first display
+    end
+    return amount
+end
+
 -- Function to update currency data
 function RanckorsBaggage:UpdateCurrencyData()
-    self.gold = GetCurrencyAmount(CURT_MONEY, CURRENCY_LOCATION_CHARACTER)
-    self.alliancePoints = GetCurrencyAmount(CURT_ALLIANCE_POINTS, CURRENCY_LOCATION_CHARACTER)
-    self.telVar = GetCurrencyAmount(CURT_TELVAR_STONES, CURRENCY_LOCATION_CHARACTER)
-    self.eventTickets = GetCurrencyAmount(CURT_EVENT_TICKETS, CURRENCY_LOCATION_ACCOUNT)
-    self.undauntedKeys = GetCurrencyAmount(CURT_UNDAUNTED_KEYS, CURRENCY_LOCATION_ACCOUNT)
-    self.transmuteCrystals = GetCurrencyAmount(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)
-    self.crownGems = GetCurrencyAmount(CURT_CROWN_GEMS, CURRENCY_LOCATION_ACCOUNT)
-    self.sealsOfEndeavour = GetCurrencyAmount(CURT_ENDEAVOR_SEALS, CURRENCY_LOCATION_ACCOUNT)
-    self.writVouchers = GetCurrencyAmount(CURT_WRIT_VOUCHERS, CURRENCY_LOCATION_CHARACTER)
-    self.archivalFortunes = GetCurrencyAmount(CURT_ARCHIVAL_FORTUNES, CURRENCY_LOCATION_ACCOUNT)
-    self.crowns = GetCurrencyAmount(CURT_CROWNS, CURRENCY_LOCATION_ACCOUNT)
+    -- Player-held currency
+    self.gold = self:GetCurrencySafely(CURT_MONEY, CURRENCY_LOCATION_CHARACTER)
+    self.alliancePoints = self:GetCurrencySafely(CURT_ALLIANCE_POINTS, CURRENCY_LOCATION_CHARACTER)
+    self.telVar = self:GetCurrencySafely(CURT_TELVAR_STONES, CURRENCY_LOCATION_CHARACTER)
+    self.eventTickets = self:GetCurrencySafely(CURT_EVENT_TICKETS, CURRENCY_LOCATION_ACCOUNT)
+    self.undauntedKeys = self:GetCurrencySafely(CURT_UNDAUNTED_KEYS, CURRENCY_LOCATION_ACCOUNT)
+    self.transmuteCrystals = self:GetCurrencySafely(CURT_CHAOTIC_CREATIA, CURRENCY_LOCATION_ACCOUNT)
+    self.crownGems = self:GetCurrencySafely(CURT_CROWN_GEMS, CURRENCY_LOCATION_ACCOUNT)
+    self.imperialFragments = self:GetCurrencySafely(CURT_IMPERIAL_FRAGMENTS, CURRENCY_LOCATION_ACCOUNT)
+    self.sealsOfEndeavour = self:GetCurrencySafely(CURT_ENDEAVOR_SEALS, CURRENCY_LOCATION_ACCOUNT)
+    self.writVouchers = self:GetCurrencySafely(CURT_WRIT_VOUCHERS, CURRENCY_LOCATION_CHARACTER)
+    self.archivalFortunes = self:GetCurrencySafely(CURT_ARCHIVAL_FORTUNES, CURRENCY_LOCATION_ACCOUNT)
+    self.crowns = self:GetCurrencySafely(CURT_CROWNS, CURRENCY_LOCATION_ACCOUNT)
+    -- Bag Information
     self.currentBagSpace = GetNumBagUsedSlots(BAG_BACKPACK)
     self.maxBagSpace = GetBagSize(BAG_BACKPACK)
+
+    -- Bank-held currency
+    self.bankedGold = self:GetCurrencySafely(CURT_MONEY, CURRENCY_LOCATION_BANK)
+    self.bankedAlliancePoints = self:GetCurrencySafely(CURT_ALLIANCE_POINTS, CURRENCY_LOCATION_BANK)
+    self.bankedTelVar = self:GetCurrencySafely(CURT_TELVAR_STONES, CURRENCY_LOCATION_BANK)
+    self.bankedWritVouchers = self:GetCurrencySafely(CURT_WRIT_VOUCHERS, CURRENCY_LOCATION_BANK)
     
     -- Bank information
     local currentBankSpace = GetNumBagUsedSlots(BAG_BANK)
@@ -170,6 +235,7 @@ function RanckorsBaggage:UpdateCurrencyData()
     end
 end
 
+
 -- Function to format numbers with commas
 function RanckorsBaggage:FormatNumberWithCommas(number)
     return tostring(number):reverse():gsub("(%d%d%d)", "%1,"):gsub(",(%-?)$", "%1"):reverse()
@@ -189,6 +255,7 @@ function RanckorsBaggage:UpdateUI()
     local undauntedColour = "|cB5A642"
     local transmuteColour = "|c8A2BE2"
     local crownGemsColour = "|ce883e8"
+    local imperialFragmentColor = "|c87CEEB"
     local sealsColour = "|c87CEEB"  -- Lighter blue color for visibility
     local writVoucherColour = "|cFFA500"
     local archivalFortunesColour = "|c800080"
@@ -217,6 +284,7 @@ function RanckorsBaggage:UpdateUI()
     end
 
     local infoText = string.format(
+        "|cCCCCCC--------Player--------|r\n" ..
         "%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n" ..
@@ -224,11 +292,17 @@ function RanckorsBaggage:UpdateUI()
         "%s|t24:24:/esoui/art/currency/undauntedkey.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/currency/currency_seedcrystal_32.dds|t %s/%s|r\n" ..
         "%s|t24:24:/esoui/art/currency/currency_crown_gems.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/currency_imperial_trophy_key_32.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/currency/currency_seals_of_endeavor_32.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/currency/archivalfragments_32.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/icons/store_crowns.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/tooltips/icon_bag.dds|t %d/%d|r\n" ..
+        "|cCCCCCC--------Banked--------|r\n" ..
+        "%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n" ..
+        "%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n" ..
         "%s|t24:24:/esoui/art/icons/servicemappins/servicepin_bank.dds|t %s/%s|r",
         goldColour, self:FormatNumberWithCommas(self.gold),
         apColour, self:FormatNumberWithCommas(self.alliancePoints),
@@ -237,11 +311,17 @@ function RanckorsBaggage:UpdateUI()
         undauntedColour, self:FormatNumberWithCommas(self.undauntedKeys),
         transmuteColour, self:FormatNumberWithCommas(self.transmuteCrystals), self:FormatNumberWithCommas(self.maxTransmuteCrystals),
         crownGemsColour, self:FormatNumberWithCommas(self.crownGems),
+        imperialFragmentColor, self:FormatNumberWithCommas(self.imperialFragments),
         sealsColour, self:FormatNumberWithCommas(self.sealsOfEndeavour),
         writVoucherColour, self:FormatNumberWithCommas(self.writVouchers),
         archivalFortunesColour, self:FormatNumberWithCommas(self.archivalFortunes),
         crownsColour, self:FormatNumberWithCommas(self.crowns),
         bagColour, self.currentBagSpace, self.maxBagSpace,
+        -- Display banked currencies below separator
+        goldColour, self:FormatNumberWithCommas(self.bankedGold),
+        apColour, self:FormatNumberWithCommas(self.bankedAlliancePoints),
+        telVarColour, self:FormatNumberWithCommas(self.bankedTelVar),
+        writVoucherColour, self:FormatNumberWithCommas(self.bankedWritVouchers),
         bankColour, self.combinedBankUsedSpace, self.combinedMaxBankSpace
     )
 
@@ -306,4 +386,4 @@ function RanckorsBaggage:OnAddOnLoaded(event, addonName)
 end
 
 -- Register the addon's event handlers
-EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ADD_ON_LOADED, function(event, ...) RanckorsBaggage:OnAddOnLoaded(event, ...) end)
+EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ADD_ON_LOADED, function(event, ...) RanckorsBaggage.hasShownCurrencyWarning = false, RanckorsBaggage:OnAddOnLoaded(event, ...) end)
