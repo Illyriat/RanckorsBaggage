@@ -22,3 +22,5 @@
 > All rights reserved.  
 >
 > You can read the full terms at https://account.elderscrollsonline.com/add-on-terms
+
+> Report & Submit your bugs and feature requests [Here](https://illyriat.com)

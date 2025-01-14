@@ -55,12 +55,12 @@ function RanckorsBaggage:CreateUI()
         RanckorsBaggage.RanckorsBaggageWindowLink:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 5) -- Positioned at the very top
         RanckorsBaggage.RanckorsBaggageWindowLink:SetFont("ZoFontGameSmall")
         RanckorsBaggage.RanckorsBaggageWindowLink:SetColor(0, 0.7, 1, 1) -- Link color (light blue)
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|u1:0::RanckorsBaggage|u") -- Text with underline effect
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|u1:0::RanckorsBaggage|u |t24:24:/esoui/art/help/help_tabicon_cs_up.dds|t") -- Text with an icon
         RanckorsBaggage.RanckorsBaggageWindowLink:SetMouseEnabled(true)
 
         -- Click handler to open website
         RanckorsBaggage.RanckorsBaggageWindowLink:SetHandler("OnMouseUp", function()
-            RequestOpenUnsafeURL("https://james-robson.dev/") -- Replace with the actual URL
+            RequestOpenUnsafeURL("https://illyriat.com/") -- Replace with the actual URL
         end)
 
         -- Create the label to display the information, positioned below the link
@@ -84,7 +84,7 @@ end
 -- Function to apply the background style
 function RanckorsBaggage:ApplyBackgroundStyle(background)
     if not background then
-        d("Error: Background control is nil.")
+        d("RanckorsBaggage Error: Background control is nil.")
         return
     end
 
@@ -104,9 +104,9 @@ function RanckorsBaggage:SetBackgroundStyle(style)
         local background = RanckorsBaggageWindow:GetNamedChild("BG")
         if background then
             self:ApplyBackgroundStyle(background)
-            d("Background style set to " .. style)
+            d("RanckorsBaggage: Background style set to " .. style)
         else
-            d("Error: Background control not found.")
+            d("RanckorsBaggage Error: Background control not found.")
         end
     end
 end
@@ -135,11 +135,11 @@ function RanckorsBaggage:RestorePosition()
     if self.savedVariables and self.savedVariables.position then
         RanckorsBaggageWindow:ClearAnchors()
         RanckorsBaggageWindow:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, self.savedVariables.position.x, self.savedVariables.position.y)
-        d("Restored position to: " .. self.savedVariables.position.x .. ", " .. self.savedVariables.position.y)
+        d("RanckorsBaggage Restored position to: " .. self.savedVariables.position.x .. ", " .. self.savedVariables.position.y)
     else
         -- Set to default position if no saved variables
         RanckorsBaggageWindow:SetAnchor(TOPLEFT, GuiRoot, TOPLEFT, RanckorsBaggage.defaults.position.x, RanckorsBaggage.defaults.position.y)
-        d("Set to default position: " .. RanckorsBaggage.defaults.position.x .. ", " .. RanckorsBaggage.defaults.position.y)
+        d("RanckorsBaggage Set to default position: " .. RanckorsBaggage.defaults.position.x .. ", " .. RanckorsBaggage.defaults.position.y)
     end
 end
 
@@ -147,7 +147,7 @@ end
 function RanckorsBaggage:SavePosition()
     if RanckorsBaggageWindow then
         self.savedVariables.position = { x = RanckorsBaggageWindow:GetLeft(), y = RanckorsBaggageWindow:GetTop() }
-        d("Saved position: " .. self.savedVariables.position.x .. ", " .. self.savedVariables.position.y)
+        d("RanckorsBaggage Saved position: " .. self.savedVariables.position.x .. ", " .. self.savedVariables.position.y)
     end
 end
 
@@ -283,6 +283,7 @@ function RanckorsBaggage:UpdateUI()
         bankColour = "|cFFA500"  -- Amber (Orange)
     end
 
+
     local infoText = string.format(
         "|cCCCCCC--------Player--------|r\n" ..
         "%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n" ..
@@ -350,7 +351,7 @@ end
 
 -- Event handler for player activated
 function RanckorsBaggage:OnPlayerActivated(event)
-    d("Player activated.")
+    d("RanckorsBaggage: Player activated.")
     -- Unregister the event so it doesn't get called again
     EVENT_MANAGER:UnregisterForEvent("RanckorsBaggage", EVENT_PLAYER_ACTIVATED)
 
