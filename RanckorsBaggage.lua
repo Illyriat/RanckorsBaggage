@@ -29,9 +29,10 @@ function RanckorsBaggage:Initialize()
     SLASH_COMMANDS["/rb"] = function() self:ToggleWindow() end
     SLASH_COMMANDS["/rbclear"] = function() self:SetBackgroundStyle("clear") end
     SLASH_COMMANDS["/rbdark"] = function() self:SetBackgroundStyle("dark") end
+    SLASH_COMMANDS["/rbsettings"] = function() self:ToggleSettingsWindow() end
+
 end
 
--- Function to create UI
 -- Function to create UI
 function RanckorsBaggage:CreateUI()
     d("Creating UI...")
@@ -55,7 +56,7 @@ function RanckorsBaggage:CreateUI()
         RanckorsBaggage.RanckorsBaggageWindowLink:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 5) -- Positioned at the very top
         RanckorsBaggage.RanckorsBaggageWindowLink:SetFont("ZoFontGameSmall")
         RanckorsBaggage.RanckorsBaggageWindowLink:SetColor(0, 0.7, 1, 1) -- Link color (light blue)
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|u1:0::RanckorsBaggage|u |t24:24:/esoui/art/help/help_tabicon_cs_up.dds|t") -- Text with an icon
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|t24:24:/esoui/art/help/help_tabicon_cs_up.dds|t |u1:0::RanckorsBaggage|u") -- Text with an icon
         RanckorsBaggage.RanckorsBaggageWindowLink:SetMouseEnabled(true)
 
         -- Click handler to open website
@@ -77,6 +78,233 @@ function RanckorsBaggage:CreateUI()
             self:SavePosition()
         end)
     end
+end
+
+-- Table to map currency types to human-readable names. This then passes into the CreateSettingsWindow
+local CURRENCY_NAMES = {
+    [CURT_MONEY] = "Gold",
+    [CURT_ALLIANCE_POINTS] = "Alliance Points",
+    [CURT_TELVAR_STONES] = "Tel Var Stones",
+    [CURT_EVENT_TICKETS] = "Event Tickets",
+    [CURT_UNDAUNTED_KEYS] = "Undaunted Keys",
+    [CURT_CHAOTIC_CREATIA] = "Transmute Crystals",
+    [CURT_CROWN_GEMS] = "Crown Gems",
+    [CURT_IMPERIAL_FRAGMENTS] = "Imperial Fragments",
+    [CURT_ENDEAVOR_SEALS] = "Seals of Endeavor",
+    [CURT_WRIT_VOUCHERS] = "Writ Vouchers",
+    [CURT_ARCHIVAL_FORTUNES] = "Archival Fortunes",
+    [CURT_CROWNS] = "Crowns"
+}
+
+
+
+-- Function to create settings window with ON/OFF toggles
+function RanckorsBaggage:CreateSettingsWindow()
+    if not RanckorsBaggageSettingsWindow then
+        -- Create the settings window
+        RanckorsBaggageSettingsWindow = WINDOW_MANAGER:CreateTopLevelWindow("RanckorsBaggageSettingsWindow")
+        RanckorsBaggageSettingsWindow:SetDimensions(400, 800)
+        RanckorsBaggageSettingsWindow:SetMovable(true)
+        RanckorsBaggageSettingsWindow:SetMouseEnabled(true)
+        RanckorsBaggageSettingsWindow:SetClampedToScreen(true)
+        RanckorsBaggageSettingsWindow:SetHidden(true)
+
+        -- Center the settings window
+        RanckorsBaggageSettingsWindow:ClearAnchors()
+        RanckorsBaggageSettingsWindow:SetAnchor(CENTER, GuiRoot, CENTER, 0, 0)
+
+        -- Add a background
+        local background = WINDOW_MANAGER:CreateControl("$(parent)BG", RanckorsBaggageSettingsWindow, CT_BACKDROP)
+        background:SetAnchorFill(RanckorsBaggageSettingsWindow)
+        background:SetCenterColor(0.1, 0.1, 0.1, 0.8)
+        background:SetEdgeColor(0.5, 0.5, 0.5, 1)
+
+        -- Add a title label
+        local title = WINDOW_MANAGER:CreateControl("$(parent)Title", RanckorsBaggageSettingsWindow, CT_LABEL)
+        title:SetDimensions(380, 24)
+        title:SetAnchor(TOP, RanckorsBaggageSettingsWindow, TOP, 0, 10)
+        title:SetFont("ZoFontWinH1")
+        title:SetText("|cFFD700Ranckors Baggage Settings|r")
+
+        -- Add an Exit button in the top-right corner
+        local exitButton = WINDOW_MANAGER:CreateControl("$(parent)ExitButton", RanckorsBaggageSettingsWindow, CT_BUTTON)
+        exitButton:SetDimensions(20, 20)
+        exitButton:SetAnchor(TOPRIGHT, RanckorsBaggageSettingsWindow, TOPRIGHT, -10, 10)
+        exitButton:SetText("X")
+        exitButton:SetFont("ZoFontGameSmall")
+        exitButton:SetHandler("OnClicked", function()
+            RanckorsBaggageSettingsWindow:SetHidden(true)
+        end)
+
+        -- Helper function to create a toggle button
+        local toggleControls = {} -- Store references to toggle buttons for reset functionality
+        local function CreateToggle(parent, x, y, label, key)
+            -- Container for consistent alignment
+            local container = WINDOW_MANAGER:CreateControl(nil, parent, CT_CONTROL)
+            container:SetDimensions(360, 30)
+            container:SetAnchor(TOPLEFT, parent, TOPLEFT, x, y)
+
+            -- Label
+            local toggleLabel = WINDOW_MANAGER:CreateControl(nil, container, CT_LABEL)
+            toggleLabel:SetAnchor(LEFT, container, LEFT, 10, 0)
+            toggleLabel:SetFont("ZoFontGameSmall")
+            toggleLabel:SetText(label)
+
+            -- Toggle button
+            local toggleButton = WINDOW_MANAGER:CreateControl(nil, container, CT_BUTTON)
+            toggleButton:SetDimensions(60, 20)
+            toggleButton:SetAnchor(RIGHT, container, RIGHT, -10, 0)
+            toggleButton:SetFont("ZoFontGameSmall")
+            toggleButton:SetText(self.savedVariables.displaySettings[key] and "|c00FF00ON|r" or "|cFF0000OFF|r")
+            toggleButton.key = key -- Save the key for reset functionality
+            toggleButton:SetHandler("OnClicked", function()
+                -- Toggle the setting and update UI
+                self.savedVariables.displaySettings[key] = not self.savedVariables.displaySettings[key]
+                toggleButton:SetText(self.savedVariables.displaySettings[key] and "|c00FF00ON|r" or "|cFF0000OFF|r")
+                self:UpdateUI()
+            end)
+
+            -- Store toggle button reference
+            toggleControls[key] = toggleButton
+        end
+
+        -- Define sections and toggles
+        local playerCurrencies = {
+            { key = CURT_MONEY, label = "Gold" },
+            { key = CURT_ALLIANCE_POINTS, label = "Alliance Points" },
+            { key = CURT_TELVAR_STONES, label = "Tel Var Stones" },
+            { key = CURT_EVENT_TICKETS, label = "Event Tickets" },
+            { key = CURT_UNDAUNTED_KEYS, label = "Undaunted Keys" },
+            { key = CURT_CHAOTIC_CREATIA, label = "Transmute Crystals" },
+            { key = CURT_CROWN_GEMS, label = "Crown Gems" },
+            { key = CURT_IMPERIAL_FRAGMENTS, label = "Imperial Fragments" },
+            { key = CURT_ENDEAVOR_SEALS, label = "Seals of Endeavor" },
+            { key = CURT_WRIT_VOUCHERS, label = "Writ Vouchers" },
+            { key = CURT_ARCHIVAL_FORTUNES, label = "Archival Fortunes" },
+            { key = CURT_CROWNS, label = "Crowns" },
+        }
+
+        local bankedCurrencies = {
+            { key = "BankedGold", label = "Banked Gold" },
+            { key = "BankedAlliancePoints", label = "Banked Alliance Points" },
+            { key = "BankedTelVar", label = "Banked Tel Var Stones" },
+            { key = "BankedWritVouchers", label = "Banked Writ Vouchers" },
+        }
+
+        local utilities = {
+            { key = "BagSpace", label = "Bag Space" },
+            { key = "BankSpace", label = "Bank Space" },
+        }
+
+        -- Add toggles for each section with headings
+        local startY = 50
+        local offsetY = 30
+
+        -- Player Currency Heading
+        local playerHeading = WINDOW_MANAGER:CreateControl(nil, RanckorsBaggageSettingsWindow, CT_LABEL)
+        playerHeading:SetAnchor(TOPLEFT, RanckorsBaggageSettingsWindow, TOPLEFT, 20, startY)
+        playerHeading:SetFont("ZoFontGameBold")
+        playerHeading:SetText("|cCCCCCCPlayer Currencies|r")
+        startY = startY + offsetY
+
+        for _, item in ipairs(playerCurrencies) do
+            CreateToggle(RanckorsBaggageSettingsWindow, 20, startY, item.label, item.key)
+            startY = startY + offsetY
+        end
+
+        -- Banked Currency Heading
+        local bankedHeading = WINDOW_MANAGER:CreateControl(nil, RanckorsBaggageSettingsWindow, CT_LABEL)
+        bankedHeading:SetAnchor(TOPLEFT, RanckorsBaggageSettingsWindow, TOPLEFT, 20, startY)
+        bankedHeading:SetFont("ZoFontGameBold")
+        bankedHeading:SetText("|cCCCCCCBanked Currencies|r")
+        startY = startY + offsetY
+
+        for _, item in ipairs(bankedCurrencies) do
+            CreateToggle(RanckorsBaggageSettingsWindow, 20, startY, item.label, item.key)
+            startY = startY + offsetY
+        end
+
+        -- Utilities Heading
+        local utilitiesHeading = WINDOW_MANAGER:CreateControl(nil, RanckorsBaggageSettingsWindow, CT_LABEL)
+        utilitiesHeading:SetAnchor(TOPLEFT, RanckorsBaggageSettingsWindow, TOPLEFT, 20, startY)
+        utilitiesHeading:SetFont("ZoFontGameBold")
+        utilitiesHeading:SetText("|cCCCCCCUtilities|r")
+        startY = startY + offsetY
+
+        for _, item in ipairs(utilities) do
+            CreateToggle(RanckorsBaggageSettingsWindow, 20, startY, item.label, item.key)
+            startY = startY + offsetY
+        end
+
+        -- Add Reset Button
+        local resetButton = WINDOW_MANAGER:CreateControl("$(parent)ResetButton", RanckorsBaggageSettingsWindow, CT_BUTTON)
+        resetButton:SetAnchor(BOTTOMRIGHT, RanckorsBaggageSettingsWindow, BOTTOMRIGHT, -20, -20)
+        resetButton:SetDimensions(120, 40)
+        resetButton:SetFont("ZoFontWinH3")
+        resetButton:SetText("|cFFD700Reset|r")
+        resetButton:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
+        resetButton:SetVerticalAlignment(TEXT_ALIGN_CENTER)
+        resetButton:SetHandler("OnClicked", function()
+            -- Reset all settings to default
+            for _, item in ipairs(playerCurrencies) do
+                self.savedVariables.displaySettings[item.key] = true
+            end
+            for _, item in ipairs(bankedCurrencies) do
+                self.savedVariables.displaySettings[item.key] = true
+            end
+            for _, item in ipairs(utilities) do
+                self.savedVariables.displaySettings[item.key] = true
+            end
+            -- Update toggle button text
+            for key, toggle in pairs(toggleControls) do
+                toggle:SetText("|c00FF00ON|r")
+            end
+            self:UpdateUI()
+        end)
+
+        -- Add a Theme toggle button
+    local themeButton = WINDOW_MANAGER:CreateControl("$(parent)ThemeButton", RanckorsBaggageSettingsWindow, CT_BUTTON)
+    themeButton:SetAnchor(BOTTOMLEFT, RanckorsBaggageSettingsWindow, BOTTOMLEFT, 20, -20) -- Position it in line with the Reset button
+    themeButton:SetDimensions(120, 40)
+    themeButton:SetFont("ZoFontWinH3")
+    themeButton:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
+    themeButton:SetVerticalAlignment(TEXT_ALIGN_CENTER)
+        
+    -- Update the button text based on the current theme
+    local function UpdateThemeButtonText()
+        themeButton:SetText("|cFFD700Theme: " .. string.upper(self.savedVariables.backgroundStyle) .. "|r")
+    end
+    
+    -- Set the button's click handler to toggle the theme
+    themeButton:SetHandler("OnClicked", function()
+        -- Toggle between "clear" and "dark" themes
+        local newStyle = (self.savedVariables.backgroundStyle == "clear") and "dark" or "clear"
+        self:SetBackgroundStyle(newStyle)
+        UpdateThemeButtonText()
+    end)
+    
+    -- Initialize the button's text
+    UpdateThemeButtonText()
+
+    end
+end
+
+
+
+
+
+
+
+
+
+
+
+-- Settings toggle
+function RanckorsBaggage:ToggleSettingsWindow()
+    if not RanckorsBaggageSettingsWindow then
+        self:CreateSettingsWindow()
+    end
+    RanckorsBaggageSettingsWindow:SetHidden(not RanckorsBaggageSettingsWindow:IsHidden())
 end
 
 
@@ -151,21 +379,6 @@ function RanckorsBaggage:SavePosition()
     end
 end
 
--- Table to map currency types to human-readable names
-local CURRENCY_NAMES = {
-    [CURT_MONEY] = "Gold",
-    [CURT_ALLIANCE_POINTS] = "Alliance Points",
-    [CURT_TELVAR_STONES] = "Tel Var Stones",
-    [CURT_EVENT_TICKETS] = "Event Tickets",
-    [CURT_UNDAUNTED_KEYS] = "Undaunted Keys",
-    [CURT_CHAOTIC_CREATIA] = "Transmute Crystals",
-    [CURT_CROWN_GEMS] = "Crown Gems",
-    [CURT_IMPERIAL_FRAGMENTS] = "Imperial Fragments",
-    [CURT_ENDEAVOR_SEALS] = "Seals of Endeavor",
-    [CURT_WRIT_VOUCHERS] = "Writ Vouchers",
-    [CURT_ARCHIVAL_FORTUNES] = "Archival Fortunes",
-    [CURT_CROWNS] = "Crowns"
-}
 
 -- Helper function to safely get a currency amount or return nil if invalid
 RanckorsBaggage.hasShownCurrencyWarning = false
@@ -241,11 +454,17 @@ function RanckorsBaggage:FormatNumberWithCommas(number)
     return tostring(number):reverse():gsub("(%d%d%d)", "%1,"):gsub(",(%-?)$", "%1"):reverse()
 end
 
+
+
+
+
 -- Function to update UI
 function RanckorsBaggage:UpdateUI()
     if not IsValidRanckorsBaggageWindow() then
         return
     end
+
+    local displaySettings = self.savedVariables.displaySettings or {}
 
     -- Set default colors
     local goldColour = "|cFFD700"
@@ -256,7 +475,7 @@ function RanckorsBaggage:UpdateUI()
     local transmuteColour = "|c8A2BE2"
     local crownGemsColour = "|ce883e8"
     local imperialFragmentColor = "|c87CEEB"
-    local sealsColour = "|c87CEEB"  -- Lighter blue color for visibility
+    local sealsColour = "|c87CEEB"
     local writVoucherColour = "|cFFA500"
     local archivalFortunesColour = "|c800080"
     local crownsColour = "|cFFFF00"
@@ -265,66 +484,83 @@ function RanckorsBaggage:UpdateUI()
 
     -- Calculate bag space usage percentage
     local bagUsagePercentage = (self.currentBagSpace / self.maxBagSpace) * 100
-
-    -- Calculate bank space usage percentage
     local bankUsagePercentage = (self.combinedBankUsedSpace / self.combinedMaxBankSpace) * 100
 
-    -- Set bag color based on usage
+    -- Adjust colors based on usage
     if bagUsagePercentage >= 95 then
-        bagColour = "|cFF0000"  -- Red
+        bagColour = "|cFF0000" -- Red
     elseif bagUsagePercentage >= 90 then
-        bagColour = "|cFFA500"  -- Amber (Orange)
+        bagColour = "|cFFA500" -- Amber
     end
 
-    -- Set bank color based on usage
     if bankUsagePercentage >= 95 then
-        bankColour = "|cFF0000"  -- Red
+        bankColour = "|cFF0000" -- Red
     elseif bankUsagePercentage >= 90 then
-        bankColour = "|cFFA500"  -- Amber (Orange)
+        bankColour = "|cFFA500" -- Amber
     end
 
+    -- Build the information string
+    local infoText = "|cCCCCCC--------Player--------|r\n"
 
-    local infoText = string.format(
-        "|cCCCCCC--------Player--------|r\n" ..
-        "%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/icon_eventticket_loot.dds|t %s/12|r\n" ..
-        "%s|t24:24:/esoui/art/currency/undauntedkey.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/currency_seedcrystal_32.dds|t %s/%s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/currency_crown_gems.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/currency_imperial_trophy_key_32.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/currency_seals_of_endeavor_32.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/archivalfragments_32.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/icons/store_crowns.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/tooltips/icon_bag.dds|t %d/%d|r\n" ..
-        "|cCCCCCC--------Banked--------|r\n" ..
-        "%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n" ..
-        "%s|t24:24:/esoui/art/icons/servicemappins/servicepin_bank.dds|t %s/%s|r",
-        goldColour, self:FormatNumberWithCommas(self.gold),
-        apColour, self:FormatNumberWithCommas(self.alliancePoints),
-        telVarColour, self:FormatNumberWithCommas(self.telVar),
-        eventTicketColour, self:FormatNumberWithCommas(self.eventTickets),
-        undauntedColour, self:FormatNumberWithCommas(self.undauntedKeys),
-        transmuteColour, self:FormatNumberWithCommas(self.transmuteCrystals), self:FormatNumberWithCommas(self.maxTransmuteCrystals),
-        crownGemsColour, self:FormatNumberWithCommas(self.crownGems),
-        imperialFragmentColor, self:FormatNumberWithCommas(self.imperialFragments),
-        sealsColour, self:FormatNumberWithCommas(self.sealsOfEndeavour),
-        writVoucherColour, self:FormatNumberWithCommas(self.writVouchers),
-        archivalFortunesColour, self:FormatNumberWithCommas(self.archivalFortunes),
-        crownsColour, self:FormatNumberWithCommas(self.crowns),
-        bagColour, self.currentBagSpace, self.maxBagSpace,
-        -- Display banked currencies below separator
-        goldColour, self:FormatNumberWithCommas(self.bankedGold),
-        apColour, self:FormatNumberWithCommas(self.bankedAlliancePoints),
-        telVarColour, self:FormatNumberWithCommas(self.bankedTelVar),
-        writVoucherColour, self:FormatNumberWithCommas(self.bankedWritVouchers),
-        bankColour, self.combinedBankUsedSpace, self.combinedMaxBankSpace
-    )
+    if displaySettings[CURT_MONEY] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n", goldColour, self:FormatNumberWithCommas(self.gold))
+    end
+    if displaySettings[CURT_ALLIANCE_POINTS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n", apColour, self:FormatNumberWithCommas(self.alliancePoints))
+    end
+    if displaySettings[CURT_TELVAR_STONES] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n", telVarColour, self:FormatNumberWithCommas(self.telVar))
+    end
+    if displaySettings[CURT_EVENT_TICKETS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/icon_eventticket_loot.dds|t %s/12|r\n", eventTicketColour, self:FormatNumberWithCommas(self.eventTickets))
+    end
+    if displaySettings[CURT_UNDAUNTED_KEYS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/undauntedkey.dds|t %s|r\n", undauntedColour, self:FormatNumberWithCommas(self.undauntedKeys))
+    end
+    if displaySettings[CURT_CHAOTIC_CREATIA] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/currency_seedcrystal_32.dds|t %s/%s|r\n", transmuteColour, self:FormatNumberWithCommas(self.transmuteCrystals), self:FormatNumberWithCommas(self.maxTransmuteCrystals))
+    end
+    if displaySettings[CURT_CROWN_GEMS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/currency_crown_gems.dds|t %s|r\n", crownGemsColour, self:FormatNumberWithCommas(self.crownGems))
+    end
+    if displaySettings[CURT_IMPERIAL_FRAGMENTS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/currency_imperial_trophy_key_32.dds|t %s|r\n", imperialFragmentColor, self:FormatNumberWithCommas(self.imperialFragments))
+    end
+    if displaySettings[CURT_ENDEAVOR_SEALS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/currency_seals_of_endeavor_32.dds|t %s|r\n", sealsColour, self:FormatNumberWithCommas(self.sealsOfEndeavour))
+    end
+    if displaySettings[CURT_WRIT_VOUCHERS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n", writVoucherColour, self:FormatNumberWithCommas(self.writVouchers))
+    end
+    if displaySettings[CURT_ARCHIVAL_FORTUNES] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/archivalfragments_32.dds|t %s|r\n", archivalFortunesColour, self:FormatNumberWithCommas(self.archivalFortunes))
+    end
+    if displaySettings[CURT_CROWNS] ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/icons/store_crowns.dds|t %s|r\n", crownsColour, self:FormatNumberWithCommas(self.crowns))
+    end
+
+    if displaySettings.BagSpace ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/tooltips/icon_bag.dds|t %d/%d|r\n", bagColour, self.currentBagSpace, self.maxBagSpace)
+    end
+
+    -- Add Banked information
+    infoText = infoText .. "|cCCCCCC--------Banked--------|r\n"
+
+    if displaySettings.BankedGold ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/gold_mipmap.dds|t %s|r\n", goldColour, self:FormatNumberWithCommas(self.bankedGold))
+    end
+    if displaySettings.BankedAlliancePoints ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/alliancepoints.dds|t %s|r\n", apColour, self:FormatNumberWithCommas(self.bankedAlliancePoints))
+    end
+    if displaySettings.BankedTelVar ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/currency/telvar_mipmap.dds|t %s|r\n", telVarColour, self:FormatNumberWithCommas(self.bankedTelVar))
+    end
+    if displaySettings.BankedWritVouchers ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/icons/icon_writvoucher.dds|t %s|r\n", writVoucherColour, self:FormatNumberWithCommas(self.bankedWritVouchers))
+    end
+    if displaySettings.BankSpace ~= false then
+        infoText = infoText .. string.format("%s|t24:24:/esoui/art/icons/servicemappins/servicepin_bank.dds|t %d/%d|r\n", bankColour, self.combinedBankUsedSpace, self.combinedMaxBankSpace)
+    end
 
     if RanckorsBaggage.RanckorsBaggageWindowLabel then
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetText(infoText)
@@ -332,6 +568,8 @@ function RanckorsBaggage:UpdateUI()
         d("Error: RanckorsBaggageWindowLabel is nil.")
     end
 end
+
+
 
 -- Function to check if the window is valid
 function IsValidRanckorsBaggageWindow()
@@ -379,7 +617,36 @@ end
 function RanckorsBaggage:OnAddOnLoaded(event, addonName)
     if addonName == "RanckorsBaggage" then
         -- Initialize saved variables
-        self.savedVariables = ZO_SavedVars:NewAccountWide("RanckorsBaggageSavedVars", 1, nil, RanckorsBaggage.defaults)
+        self.savedVariables = ZO_SavedVars:NewAccountWide("RanckorsBaggageSavedVars", 1, nil, {
+            position = RanckorsBaggage.defaults.position,
+            backgroundStyle = RanckorsBaggage.defaults.backgroundStyle,
+            displaySettings = {
+                -- Player currencies
+                [CURT_MONEY] = true,
+                [CURT_ALLIANCE_POINTS] = true,
+                [CURT_TELVAR_STONES] = true,
+                [CURT_EVENT_TICKETS] = true,
+                [CURT_UNDAUNTED_KEYS] = true,
+                [CURT_CHAOTIC_CREATIA] = true,
+                [CURT_CROWN_GEMS] = true,
+                [CURT_IMPERIAL_FRAGMENTS] = true,
+                [CURT_ENDEAVOR_SEALS] = true,
+                [CURT_WRIT_VOUCHERS] = true,
+                [CURT_ARCHIVAL_FORTUNES] = true,
+                [CURT_CROWNS] = true,
+                -- Banked currencies
+                BankedGold = true,
+                BankedAlliancePoints = true,
+                BankedTelVar = true,
+                BankedWritVouchers = true,
+                -- Bag and bank space
+                BagSpace = true,
+                BankSpace = true,
+            },
+        })
+        
+        
+        
 
         -- Initialize the addon
         self:Initialize()
