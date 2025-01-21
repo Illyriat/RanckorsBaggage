@@ -290,15 +290,6 @@ function RanckorsBaggage:CreateSettingsWindow()
 end
 
 
-
-
-
-
-
-
-
-
-
 -- Settings toggle
 function RanckorsBaggage:ToggleSettingsWindow()
     if not RanckorsBaggageSettingsWindow then
@@ -403,6 +394,13 @@ function RanckorsBaggage:GetCurrencySafely(currencyType, currencyLocation)
     return amount
 end
 
+
+-- Function to format numbers with commas
+function RanckorsBaggage:FormatNumberWithCommas(number)
+    return tostring(number):reverse():gsub("(%d%d%d)", "%1,"):gsub(",(%-?)$", "%1"):reverse()
+end
+
+
 -- Function to update currency data
 function RanckorsBaggage:UpdateCurrencyData()
     -- Player-held currency
@@ -418,47 +416,43 @@ function RanckorsBaggage:UpdateCurrencyData()
     self.writVouchers = self:GetCurrencySafely(CURT_WRIT_VOUCHERS, CURRENCY_LOCATION_CHARACTER)
     self.archivalFortunes = self:GetCurrencySafely(CURT_ARCHIVAL_FORTUNES, CURRENCY_LOCATION_ACCOUNT)
     self.crowns = self:GetCurrencySafely(CURT_CROWNS, CURRENCY_LOCATION_ACCOUNT)
+
     -- Bag Information
     self.currentBagSpace = GetNumBagUsedSlots(BAG_BACKPACK)
     self.maxBagSpace = GetBagSize(BAG_BACKPACK)
 
-    -- Bank-held currency
+    -- Bank-held currencies
     self.bankedGold = self:GetCurrencySafely(CURT_MONEY, CURRENCY_LOCATION_BANK)
     self.bankedAlliancePoints = self:GetCurrencySafely(CURT_ALLIANCE_POINTS, CURRENCY_LOCATION_BANK)
     self.bankedTelVar = self:GetCurrencySafely(CURT_TELVAR_STONES, CURRENCY_LOCATION_BANK)
     self.bankedWritVouchers = self:GetCurrencySafely(CURT_WRIT_VOUCHERS, CURRENCY_LOCATION_BANK)
-    
-    -- Bank information
-    local currentBankSpace = GetNumBagUsedSlots(BAG_BANK)
-    local maxBankSpace = GetBagUseableSize(BAG_BANK)
-    
-    -- Subscribers Bank Information 
-    local currentSubBankSpace = GetNumBagUsedSlots(BAG_SUBSCRIBER_BANK)
-    local maxSubBankSpace = GetBagSize(BAG_SUBSCRIBER_BANK)
-    
-    -- Combine Both 
-    self.combinedBankUsedSpace = currentBankSpace + currentSubBankSpace
-    self.combinedMaxBankSpace = maxBankSpace + maxSubBankSpace
 
-    -- Determine the max transmute crystals based on subscription status
+    -- Bank information
+    local currentBankUsed = GetNumBagUsedSlots(BAG_BANK)
+    local maxBankSize = GetBagSize(BAG_BANK)
+    local currentSubscriberBankUsed = GetNumBagUsedSlots(BAG_SUBSCRIBER_BANK)
+    local maxSubscriberBankSize = GetBagSize(BAG_SUBSCRIBER_BANK)
+
     if IsESOPlusSubscriber() then
+        -- Include subscriber bank slots for subscribers
+        self.combinedBankUsedSpace = currentBankUsed + currentSubscriberBankUsed
+        self.combinedMaxBankSpace = maxBankSize + maxSubscriberBankSize
         self.maxTransmuteCrystals = 1000
     else
+        -- For non-subscribers, exclude max subscriber bank slots
+        self.combinedBankUsedSpace = currentBankUsed + currentSubscriberBankUsed
+        self.combinedMaxBankSpace = maxBankSize
         self.maxTransmuteCrystals = 500
     end
+
+    -- Debug: Log subscription status and calculated values
+    -- d(string.format("Subscription Status: %s", IsESOPlusSubscriber() and "Subscribed" or "Not Subscribed"))
+    -- d(string.format("Bank Space: Used=%d, Max=%d", self.combinedBankUsedSpace, self.combinedMaxBankSpace))
+    -- d(string.format("Transmute Crystals: %d/%d", self.transmuteCrystals, self.maxTransmuteCrystals))
 end
 
 
--- Function to format numbers with commas
-function RanckorsBaggage:FormatNumberWithCommas(number)
-    return tostring(number):reverse():gsub("(%d%d%d)", "%1,"):gsub(",(%-?)$", "%1"):reverse()
-end
-
-
-
-
-
--- Function to update UI
+-- Function to update the UI
 function RanckorsBaggage:UpdateUI()
     if not IsValidRanckorsBaggageWindow() then
         return
@@ -570,7 +564,6 @@ function RanckorsBaggage:UpdateUI()
 end
 
 
-
 -- Function to check if the window is valid
 function IsValidRanckorsBaggageWindow()
     return RanckorsBaggageWindow and RanckorsBaggage.RanckorsBaggageWindowLabel and RanckorsBaggageWindow.SetHidden
@@ -589,7 +582,7 @@ end
 
 -- Event handler for player activated
 function RanckorsBaggage:OnPlayerActivated(event)
-    d("RanckorsBaggage: Player activated.")
+    -- d("RanckorsBaggage: Player activated.")
     -- Unregister the event so it doesn't get called again
     EVENT_MANAGER:UnregisterForEvent("RanckorsBaggage", EVENT_PLAYER_ACTIVATED)
 
@@ -652,6 +645,16 @@ function RanckorsBaggage:OnAddOnLoaded(event, addonName)
         self:Initialize()
     end
 end
+
+-- Event handler for subscription status changes
+function RanckorsBaggage:OnSubscriptionStatusChanged(event, isFreeTrialActive)
+    d("ESO Plus subscription status changed.")
+    self:UpdateCurrencyData()
+    self:UpdateUI()
+end
+
+-- Register the subscription status event
+EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ESO_PLUS_FREE_TRIAL_STATUS_CHANGED, function(...) RanckorsBaggage:OnSubscriptionStatusChanged(...) end)
 
 -- Register the addon's event handlers
 EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ADD_ON_LOADED, function(event, ...) RanckorsBaggage.hasShownCurrencyWarning = false, RanckorsBaggage:OnAddOnLoaded(event, ...) end)
