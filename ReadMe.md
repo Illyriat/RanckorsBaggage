@@ -13,7 +13,7 @@
 
 
 ### Clear Theme
-![ClearMode Image](./images/RBaggageCloseUp.JPG)
+![ClearMode Image](./images/rbclearmode.JPG)
 
 ### Dark Theme
 ![DarkMode Image](./images/RBDarkMode.JPG)
