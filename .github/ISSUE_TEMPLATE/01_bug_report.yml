@@ -4,7 +4,6 @@ title: "[Bug] <summary of the problem>"
 labels: ["bug"]
 body:
   - type: textarea
-    id: what-happened
     attributes:
       label: What happened?
       description: Describe what went wrong. What did you expect, and what actually happened?
@@ -12,7 +11,6 @@ body:
       required: true
 
   - type: textarea
-    id: steps-to-reproduce
     attributes:
       label: Steps to reproduce
       description: List detailed steps to reproduce the issue.
@@ -25,25 +23,21 @@ body:
       required: true
 
   - type: textarea
-    id: screenshot-or-error
     attributes:
       label: Screenshot or error log
       description: Paste any LUA errors or add screenshots if available.
 
   - type: input
-    id: game-version
     attributes:
       label: Game version
       placeholder: "e.g. ESO v9.3.5 or Gold Road patch"
 
   - type: input
-    id: addon-version
     attributes:
       label: Addon version
       placeholder: "e.g. RanckorsBaggage v1.0.3"
 
   - type: dropdown
-    id: eso-plus
     attributes:
       label: ESO Plus Subscription active?
       options:
@@ -52,7 +46,6 @@ body:
         - Unsure
 
   - type: textarea
-    id: additional-context
     attributes:
       label: Additional context
       description: Any other info that might help
