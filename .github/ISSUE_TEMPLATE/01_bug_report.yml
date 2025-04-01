@@ -1,15 +1,16 @@
 name: 🐞 Bug Report
 description: Report a bug or unexpected behavior in the addon
 title: "[Bug] <summary of the problem>"
-labels: [bug]
+labels:
+  - bug
 body:
   - type: textarea
     attributes:
       label: What happened?
-      description: Describe what went wrong. What did you expect, and what actually happened?
+      description: Describe what went wrong. What did you expect, and what actually
+        happened?
     validations:
       required: true
-
   - type: textarea
     attributes:
       label: Steps to reproduce
@@ -21,23 +22,19 @@ body:
         4. Observe the error
     validations:
       required: true
-
   - type: textarea
     attributes:
       label: Screenshot or error log
       description: Paste any LUA errors or add screenshots if available.
-      placeholder: "Paste the error message or upload a screenshot"
-
+      placeholder: Paste the error message or upload a screenshot
   - type: input
     attributes:
       label: Game version
       placeholder: e.g. ESO v9.3.5 or Gold Road patch
-
   - type: input
     attributes:
       label: Addon version
       placeholder: e.g. RanckorsBaggage v1.0.3
-
   - type: dropdown
     attributes:
       label: ESO Plus Subscription active?
@@ -45,7 +42,6 @@ body:
         - Yes
         - No
         - Unsure
-
   - type: textarea
     attributes:
       label: Additional context
