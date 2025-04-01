@@ -1,0 +1,46 @@
+name: "🌟 Feature Request"
+description: Suggest a new feature or improvement for the Ranckors Baggage addon
+title: "[Feature] <short summary of the suggestion>"
+labels: [enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: What is the problem you're trying to solve?
+      description: Describe the current limitation or missing functionality in the addon.
+      placeholder: |
+        Example:
+        I’d like to see Banked Crowns displayed. Right now, there’s no way to show them in the UI.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Describe your proposed solution
+      description: What would you like the addon to do instead? Be as specific as possible.
+      placeholder: |
+        Example:
+        Add a toggle for “Banked Crowns” in the settings window, and display the amount under the “Banked” section.
+
+  - type: textarea
+    attributes:
+      label: Optional: UI or behavior suggestions
+      description: If this change involves UI, describe how it could be styled or placed (or link a sketch or mockup).
+
+  - type: checkboxes
+    attributes:
+      label: Affected areas
+      description: Which parts of the addon would be impacted or need changes?
+      options:
+        - label: Settings window (toggles, layout, etc.)
+        - label: Main display UI
+        - label: Currency data tracking
+        - label: Event handling / hooks
+        - label: SavedVariables (data structure)
+
+  - type: textarea
+    attributes:
+      label: Additional notes or context
+      description: Any other details that might help us understand or prioritize the request?
+      placeholder: |
+        Example:
+        This feature would be useful for players who want to track their Crown balance more easily.

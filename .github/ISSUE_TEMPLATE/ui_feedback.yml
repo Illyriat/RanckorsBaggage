@@ -1,0 +1,30 @@
+name: "🎨 UI / UX Feedback"
+description: Suggest an improvement to the user interface or experience
+title: "[UI] <short summary>"
+labels: [ui, enhancement]
+body:
+  - type: textarea
+    attributes:
+      label: What’s the current UI behavior?
+      description: Describe the current design or flow that could be improved.
+
+  - type: textarea
+    attributes:
+      label: Suggested improvement
+      description: What would improve the UI or make it more intuitive?
+
+  - type: dropdown
+    attributes:
+      label: Affected UI element
+      options:
+        - Main Window
+        - Settings Window
+        - Theme toggle
+        - Bag/Bank display
+        - Slash command behavior
+        - Other
+
+  - type: textarea
+    attributes:
+      label: Screenshot or mockup
+      description: Upload or link a mockup/sketch if you have one

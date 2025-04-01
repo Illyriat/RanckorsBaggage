@@ -1,0 +1,21 @@
+name: "📝 Documentation Request"
+description: Suggest a change or addition to the README or in-game help
+title: "[Docs] <short summary>"
+labels: [documentation]
+body:
+  - type: textarea
+    attributes:
+      label: What needs to be updated?
+      description: Describe what part of the documentation is outdated, unclear, or missing.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Suggested changes
+      description: How would you reword or improve it?
+
+  - type: input
+    attributes:
+      label: File or section
+      placeholder: "e.g. README.md → Installation section"

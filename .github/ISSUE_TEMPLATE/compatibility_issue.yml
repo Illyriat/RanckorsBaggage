@@ -1,0 +1,24 @@
+name: "🔄 Compatibility Issue"
+description: Report issues caused by game updates or conflicts with other addons
+title: "[Compatibility] <issue summary>"
+labels: [bug, compatibility]
+body:
+  - type: textarea
+    attributes:
+      label: Describe the issue
+      description: What happens, and how is it linked to a new patch or another addon?
+
+  - type: input
+    attributes:
+      label: ESO version / patch
+      placeholder: "e.g. v9.3.5 / Necrom Chapter patch"
+
+  - type: textarea
+    attributes:
+      label: Addon conflict (if any)
+      description: Name any other addon that seems to be involved
+
+  - type: textarea
+    attributes:
+      label: Error logs / screenshots
+      description: Paste any LUA errors or visual issues here

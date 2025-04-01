@@ -1,0 +1,51 @@
+name: "🐞 Bug Report"
+description: Report a bug or unexpected behavior in the addon
+title: "[Bug] <summary of the problem>"
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Describe the issue clearly. What did you expect to happen, and what actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: List the exact steps to recreate the bug.
+      placeholder: |
+        1. Load into the game
+        2. Use `/rb`
+        3. Change a toggle
+        4. Observe the error
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Screenshot or error log
+      description: Paste the error message or attach a screenshot if possible.
+
+  - type: input
+    attributes:
+      label: Game version
+      placeholder: "e.g. ESO v9.3.5 or Flames of Ambition patch"
+
+  - type: input
+    attributes:
+      label: Addon version
+      placeholder: "e.g. RanckorsBaggage v1.0.3"
+
+  - type: dropdown
+    attributes:
+      label: ESO Plus Subscription active?
+      options:
+        - Yes
+        - No
+        - Unsure
+
+  - type: textarea
+    attributes:
+      label: Additional context
+      description: Add any other info you think may help (e.g., other addons running)
