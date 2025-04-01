@@ -1,3 +1,4 @@
+version: 1.0
 name: "🐞 Bug Report"
 description: Report a bug or unexpected behavior in the addon
 title: "[Bug] <summary of the problem>"

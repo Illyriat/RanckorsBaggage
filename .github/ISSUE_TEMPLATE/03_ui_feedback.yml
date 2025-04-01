@@ -1,3 +1,4 @@
+version: 1.0
 name: "🎨 UI / UX Feedback"
 description: Suggest an improvement to the user interface or experience
 title: "[UI] <short summary>"
