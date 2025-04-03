@@ -2,12 +2,12 @@ name: "🐞 Bug Report"
 description: Report a bug or unexpected behavior in the addon
 title: "[Bug] <summary of the problem>"
 labels: [bug]
+type: issue
 body:
   - type: textarea
     attributes:
       label: What happened?
-      description: Describe what went wrong. What did you expect, and what actually
-        happened?
+      description: Describe what went wrong. What did you expect, and what actually happened?
     validations:
       required: true
 
