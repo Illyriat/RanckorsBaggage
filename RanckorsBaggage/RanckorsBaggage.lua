@@ -2,7 +2,11 @@
 -- Module to handle Bag space and currency displays
 -- ----------------------------------------------
 
--- Define addon namespace
+
+-- Ingame script to enable console Mode on PC
+-- /script SetCVar("ForceConsoleFlow.2", "1")
+
+
 local RanckorsBaggage = {}
 
 -- Define the default saved variables
@@ -11,10 +15,13 @@ RanckorsBaggage.defaults = {
     backgroundStyle = "clear"       -- Default background style
 }
 
+
+RanckorsBaggage.version = "v2.0.1"
+
 -- Initialize function
 function RanckorsBaggage:Initialize()
     d("Initializing RanckorsBaggage...")
-    
+
     -- Create and initialize the UI
     self:CreateUI()
 
@@ -24,7 +31,7 @@ function RanckorsBaggage:Initialize()
     EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_INVENTORY_SINGLE_SLOT_UPDATE, function(event, ...) self:OnInventoryUpdate(event, ...) end)
     EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ACTION_LAYER_PUSHED, function(event, layerIndex, activeLayerIndex) self:OnActionLayerPushed(event, layerIndex, activeLayerIndex) end)
     EVENT_MANAGER:RegisterForEvent("RanckorsBaggage", EVENT_ACTION_LAYER_POPPED, function(event, layerIndex, activeLayerIndex) self:OnActionLayerPopped(event, layerIndex, activeLayerIndex) end)
-    
+
     -- Register slash commands
     SLASH_COMMANDS["/rb"] = function() self:ToggleWindow() end
     SLASH_COMMANDS["/rbclear"] = function() self:SetBackgroundStyle("clear") end
@@ -38,9 +45,8 @@ function RanckorsBaggage:CreateUI()
     d("Creating UI...")
 
     if not RanckorsBaggageWindow then
-        -- Create the main window with a larger height
         RanckorsBaggageWindow = WINDOW_MANAGER:CreateTopLevelWindow("RanckorsBaggageWindow")
-        RanckorsBaggageWindow:SetDimensions(300, 520) -- Adjusted height to fit all info
+        RanckorsBaggageWindow:SetDimensions(300, 520)
         RanckorsBaggageWindow:SetMovable(true)
         RanckorsBaggageWindow:SetMouseEnabled(true)
         RanckorsBaggageWindow:SetClampedToScreen(true)
@@ -48,21 +54,30 @@ function RanckorsBaggage:CreateUI()
         -- Create the background and set it to fill the window dynamically
         local background = WINDOW_MANAGER:CreateControl("$(parent)BG", RanckorsBaggageWindow, CT_BACKDROP)
         background:SetAnchorFill(RanckorsBaggageWindow)
-        self:ApplyBackgroundStyle(background) -- Apply the current background style
+        self:ApplyBackgroundStyle(background)
 
         -- Create a label for the clickable link at the top
         RanckorsBaggage.RanckorsBaggageWindowLink = WINDOW_MANAGER:CreateControl("$(parent)Link", RanckorsBaggageWindow, CT_LABEL)
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetDimensions(280, 24) -- Adjust dimensions as needed
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 5) -- Positioned at the very top
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetDimensions(280, 24)
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 10)
         RanckorsBaggage.RanckorsBaggageWindowLink:SetFont("ZoFontGameSmall")
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetColor(0, 0.7, 1, 1) -- Link color (light blue)
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|t24:24:/esoui/art/help/help_tabicon_cs_up.dds|t |u1:0::RanckorsBaggage|u") -- Text with an icon
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetColor(0, 0.7, 1, 1)
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|t24:24:/esoui/art/help/help_tabicon_cs_up.dds|t |u1:0::RanckorsBaggage|u")
         RanckorsBaggage.RanckorsBaggageWindowLink:SetMouseEnabled(true)
 
         -- Click handler to open website
         RanckorsBaggage.RanckorsBaggageWindowLink:SetHandler("OnMouseUp", function()
-            RequestOpenUnsafeURL("https://illyriat.com/") -- Replace with the actual URL
+            RequestOpenUnsafeURL("https://illyriat.com/")
         end)
+
+        -- Version label
+        RanckorsBaggage.RanckorsBaggageWindowVersion = WINDOW_MANAGER:CreateControl("$(parent)Version", RanckorsBaggageWindow, CT_LABEL)
+        RanckorsBaggage.RanckorsBaggageWindowVersion:SetDimensions(280, 20)
+        RanckorsBaggage.RanckorsBaggageWindowVersion:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 25, 28)
+        RanckorsBaggage.RanckorsBaggageWindowVersion:SetFont("ZoFontGameSmall")
+        RanckorsBaggage.RanckorsBaggageWindowVersion:SetColor(0.8, 0.8, 0.8, 1)
+        RanckorsBaggage.RanckorsBaggageWindowVersion:SetText(RanckorsBaggage.version)
+
 
         -- Create the label to display the information, positioned below the link
         RanckorsBaggage.RanckorsBaggageWindowLabel = WINDOW_MANAGER:CreateControl("$(parent)Label", RanckorsBaggageWindow, CT_LABEL)
@@ -269,12 +284,12 @@ function RanckorsBaggage:CreateSettingsWindow()
     themeButton:SetFont("ZoFontWinH3")
     themeButton:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
     themeButton:SetVerticalAlignment(TEXT_ALIGN_CENTER)
-        
+
     -- Update the button text based on the current theme
     local function UpdateThemeButtonText()
         themeButton:SetText("|cFFD700Theme: " .. string.upper(self.savedVariables.backgroundStyle) .. "|r")
     end
-    
+
     -- Set the button's click handler to toggle the theme
     themeButton:SetHandler("OnClicked", function()
         -- Toggle between "clear" and "dark" themes
@@ -282,7 +297,7 @@ function RanckorsBaggage:CreateSettingsWindow()
         self:SetBackgroundStyle(newStyle)
         UpdateThemeButtonText()
     end)
-    
+
     -- Initialize the button's text
     UpdateThemeButtonText()
 
@@ -376,7 +391,7 @@ RanckorsBaggage.hasShownCurrencyWarning = false
 
 function RanckorsBaggage:GetCurrencySafely(currencyType, currencyLocation)
     local currencyName = CURRENCY_NAMES[currencyType] or "Unknown Currency"
-    
+
     -- Only show warning message on login or ReloadUI and only once
     if not self.hasShownCurrencyWarning then
         if not CURRENCY_NAMES[currencyType] then
@@ -493,6 +508,10 @@ function RanckorsBaggage:UpdateUI()
         bankColour = "|cFFA500" -- Amber
     end
 
+    local infoText = string.format("|c888888 %s|r\n", self.version)
+    infoText = infoText .. "|cCCCCCC--------Player--------|r\n"
+
+
     -- Build the information string
     local infoText = "|cCCCCCC--------Player--------|r\n"
 
@@ -562,6 +581,9 @@ function RanckorsBaggage:UpdateUI()
         d("Error: RanckorsBaggageWindowLabel is nil.")
     end
 end
+
+
+
 
 
 -- Function to check if the window is valid
@@ -637,9 +659,6 @@ function RanckorsBaggage:OnAddOnLoaded(event, addonName)
                 BankSpace = true,
             },
         })
-        
-        
-        
 
         -- Initialize the addon
         self:Initialize()

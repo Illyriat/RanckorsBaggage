@@ -1,0 +1,27 @@
+name: Upload to ESOUI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Zip addon folder
+        run: |
+          zip -r RanckorsBaggage.zip RanckorsBaggage
+
+
+      - name: Upload to ESOUI
+        uses: m00nyONE/esoui-upload@v1
+        with:
+          api_key: ${{ secrets.ESOUI_ADDON_UPDATE }}
+          addon_id: 3933
+          version: v2.0.1
+          zip_file: RanckorsBaggage.zip
+          changelog_file: CHANGELOG.txt
