@@ -2,12 +2,15 @@
 -- Module to handle Bag space and currency displays
 -- ----------------------------------------------
 
-
 -- Ingame script to enable console Mode on PC
 -- /script SetCVar("ForceConsoleFlow.2", "1")
+-- Image script to go back to PC Mode
+-- /script SetCVar("ForceConsoleFlow.2", "0")
 
 
+local LAM = LibAddonMenu2
 local RanckorsBaggage = {}
+RanckorsBaggage.version = "v2.0.2"
 
 -- Define the default saved variables
 RanckorsBaggage.defaults = {
@@ -16,7 +19,28 @@ RanckorsBaggage.defaults = {
 }
 
 
-RanckorsBaggage.version = "v2.0.1"
+RanckorsBaggage.fonts = {
+    pc = {
+        label = "ZoFontGameSmall",
+        heading = "ZoFontWinH1",
+        button = "ZoFontGameSmall",
+        value = "ZoFontGameLarge",
+        title = "ZoFontWinH1",
+    },
+    console = {
+        label  = "ZoFontGamepad16",
+        heading = "ZoFontGamepad18",
+        button = "ZoFontGamepad16",
+        value  = "ZoFontGamepad18",
+        title  = "ZoFontGamepadBold18",
+    }
+}
+
+
+function RanckorsBaggage:GetFont(type)
+    local platform = IsInGamepadPreferredMode() and "console" or "pc"
+    return self.fonts[platform][type] or "ZoFontGameSmall"
+end
 
 -- Initialize function
 function RanckorsBaggage:Initialize()
@@ -36,66 +60,71 @@ function RanckorsBaggage:Initialize()
     SLASH_COMMANDS["/rb"] = function() self:ToggleWindow() end
     SLASH_COMMANDS["/rbclear"] = function() self:SetBackgroundStyle("clear") end
     SLASH_COMMANDS["/rbdark"] = function() self:SetBackgroundStyle("dark") end
-    SLASH_COMMANDS["/rbsettings"] = function() self:ToggleSettingsWindow() end
+
+    self:CreateSettingsWindow()
+
 
 end
 
 -- Function to create UI
+function RanckorsBaggage:GetWindowSize()
+    if IsInGamepadPreferredMode() then
+        return 150, 480 -- Reduced for console
+    else
+        return 200, 520 -- PC default
+    end
+end
+
 function RanckorsBaggage:CreateUI()
     d("Creating UI...")
 
     if not RanckorsBaggageWindow then
         RanckorsBaggageWindow = WINDOW_MANAGER:CreateTopLevelWindow("RanckorsBaggageWindow")
-        RanckorsBaggageWindow:SetDimensions(300, 520)
+        local width, height = self:GetWindowSize()
+        RanckorsBaggageWindow:SetDimensions(width, height)
         RanckorsBaggageWindow:SetMovable(true)
         RanckorsBaggageWindow:SetMouseEnabled(true)
         RanckorsBaggageWindow:SetClampedToScreen(true)
 
-        -- Create the background and set it to fill the window dynamically
         local background = WINDOW_MANAGER:CreateControl("$(parent)BG", RanckorsBaggageWindow, CT_BACKDROP)
         background:SetAnchorFill(RanckorsBaggageWindow)
         self:ApplyBackgroundStyle(background)
 
-        -- Create a label for the clickable link at the top
         RanckorsBaggage.RanckorsBaggageWindowLink = WINDOW_MANAGER:CreateControl("$(parent)Link", RanckorsBaggageWindow, CT_LABEL)
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetDimensions(280, 24)
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetDimensions(width - 20, 24)
         RanckorsBaggage.RanckorsBaggageWindowLink:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 10)
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetFont("ZoFontGameSmall")
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetFont(self:GetFont("value"))
         RanckorsBaggage.RanckorsBaggageWindowLink:SetColor(0, 0.7, 1, 1)
-        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|t24:24:/esoui/art/help/help_tabicon_cs_up.dds|t |u1:0::RanckorsBaggage|u")
+        RanckorsBaggage.RanckorsBaggageWindowLink:SetText("|t20:20:/esoui/art/help/help_tabicon_cs_up.dds|t |u1:0::RanckorsBaggage|u")
         RanckorsBaggage.RanckorsBaggageWindowLink:SetMouseEnabled(true)
-
-        -- Click handler to open website
         RanckorsBaggage.RanckorsBaggageWindowLink:SetHandler("OnMouseUp", function()
             RequestOpenUnsafeURL("https://illyriat.com/")
         end)
 
-        -- Version label
         RanckorsBaggage.RanckorsBaggageWindowVersion = WINDOW_MANAGER:CreateControl("$(parent)Version", RanckorsBaggageWindow, CT_LABEL)
-        RanckorsBaggage.RanckorsBaggageWindowVersion:SetDimensions(280, 20)
+        RanckorsBaggage.RanckorsBaggageWindowVersion:SetDimensions(width - 20, 20)
         RanckorsBaggage.RanckorsBaggageWindowVersion:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 25, 28)
-        RanckorsBaggage.RanckorsBaggageWindowVersion:SetFont("ZoFontGameSmall")
+        RanckorsBaggage.RanckorsBaggageWindowVersion:SetFont(self:GetFont("button"))
         RanckorsBaggage.RanckorsBaggageWindowVersion:SetColor(0.8, 0.8, 0.8, 1)
         RanckorsBaggage.RanckorsBaggageWindowVersion:SetText(RanckorsBaggage.version)
 
-
-        -- Create the label to display the information, positioned below the link
         RanckorsBaggage.RanckorsBaggageWindowLabel = WINDOW_MANAGER:CreateControl("$(parent)Label", RanckorsBaggageWindow, CT_LABEL)
-        RanckorsBaggage.RanckorsBaggageWindowLabel:SetDimensions(280, 480) -- Adjusted to match new window height
-        RanckorsBaggage.RanckorsBaggageWindowLabel:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 35) -- Positioned lower to avoid overlap
-        RanckorsBaggage.RanckorsBaggageWindowLabel:SetFont("ZoFontGameLarge")
+        RanckorsBaggage.RanckorsBaggageWindowLabel:SetDimensions(width - 20, height - 40)
+        RanckorsBaggage.RanckorsBaggageWindowLabel:SetAnchor(TOPLEFT, RanckorsBaggageWindow, TOPLEFT, 10, 35)
+        RanckorsBaggage.RanckorsBaggageWindowLabel:SetFont(self:GetFont("value"))
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetColor(1, 1, 1, 1)
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetHorizontalAlignment(TEXT_ALIGN_LEFT)
         RanckorsBaggage.RanckorsBaggageWindowLabel:SetVerticalAlignment(TEXT_ALIGN_TOP)
 
-        -- Hook into the move event to save the new position
         RanckorsBaggageWindow:SetHandler("OnMoveStop", function()
             self:SavePosition()
         end)
     end
 end
 
--- Table to map currency types to human-readable names. This then passes into the CreateSettingsWindow
+
+
+-- Table to map currency types
 local CURRENCY_NAMES = {
     [CURT_MONEY] = "Gold",
     [CURT_ALLIANCE_POINTS] = "Alliance Points",
@@ -114,153 +143,103 @@ local CURRENCY_NAMES = {
 
 
 -- Function to create settings window with ON/OFF toggles
+function string.ucfirst(str)
+    return str:gsub("^%l", string.upper)
+end
+
+
 function RanckorsBaggage:CreateSettingsWindow()
-    if not RanckorsBaggageSettingsWindow then
-        -- Create the settings window
-        RanckorsBaggageSettingsWindow = WINDOW_MANAGER:CreateTopLevelWindow("RanckorsBaggageSettingsWindow")
-        RanckorsBaggageSettingsWindow:SetDimensions(400, 800)
-        RanckorsBaggageSettingsWindow:SetMovable(true)
-        RanckorsBaggageSettingsWindow:SetMouseEnabled(true)
-        RanckorsBaggageSettingsWindow:SetClampedToScreen(true)
-        RanckorsBaggageSettingsWindow:SetHidden(true)
+    local panelData = {
+        type = "panel",
+        name = "Ranckor's Baggage",
+        displayName = "|cFFD700Ranckor's Baggage|r",
+        author = "Ranckor90",
+        version = RanckorsBaggage.version,
+        registerForRefresh = true,
+        registerForDefaults = true,
+    }
 
-        -- Center the settings window
-        RanckorsBaggageSettingsWindow:ClearAnchors()
-        RanckorsBaggageSettingsWindow:SetAnchor(CENTER, GuiRoot, CENTER, 0, 0)
+    self.settingsPanel = LAM:RegisterAddonPanel("RanckorsBaggageSettings", panelData)
 
-        -- Add a background
-        local background = WINDOW_MANAGER:CreateControl("$(parent)BG", RanckorsBaggageSettingsWindow, CT_BACKDROP)
-        background:SetAnchorFill(RanckorsBaggageSettingsWindow)
-        background:SetCenterColor(0.1, 0.1, 0.1, 0.8)
-        background:SetEdgeColor(0.5, 0.5, 0.5, 1)
+    local optionsData = {}
 
-        -- Add a title label
-        local title = WINDOW_MANAGER:CreateControl("$(parent)Title", RanckorsBaggageSettingsWindow, CT_LABEL)
-        title:SetDimensions(380, 24)
-        title:SetAnchor(TOP, RanckorsBaggageSettingsWindow, TOP, 0, 10)
-        title:SetFont("ZoFontWinH1")
-        title:SetText("|cFFD700Ranckors Baggage Settings|r")
+    local playerCurrencies = {
+        { key = CURT_MONEY, label = "Gold" },
+        { key = CURT_ALLIANCE_POINTS, label = "Alliance Points" },
+        { key = CURT_TELVAR_STONES, label = "Tel Var Stones" },
+        { key = CURT_EVENT_TICKETS, label = "Event Tickets" },
+        { key = CURT_UNDAUNTED_KEYS, label = "Undaunted Keys" },
+        { key = CURT_CHAOTIC_CREATIA, label = "Transmute Crystals" },
+        { key = CURT_CROWN_GEMS, label = "Crown Gems" },
+        { key = CURT_IMPERIAL_FRAGMENTS, label = "Imperial Fragments" },
+        { key = CURT_ENDEAVOR_SEALS, label = "Seals of Endeavor" },
+        { key = CURT_WRIT_VOUCHERS, label = "Writ Vouchers" },
+        { key = CURT_ARCHIVAL_FORTUNES, label = "Archival Fortunes" },
+        { key = CURT_CROWNS, label = "Crowns" },
+    }
 
-        -- Add an Exit button in the top-right corner
-        local exitButton = WINDOW_MANAGER:CreateControl("$(parent)ExitButton", RanckorsBaggageSettingsWindow, CT_BUTTON)
-        exitButton:SetDimensions(20, 20)
-        exitButton:SetAnchor(TOPRIGHT, RanckorsBaggageSettingsWindow, TOPRIGHT, -10, 10)
-        exitButton:SetText("X")
-        exitButton:SetFont("ZoFontGameSmall")
-        exitButton:SetHandler("OnClicked", function()
-            RanckorsBaggageSettingsWindow:SetHidden(true)
-        end)
+    local bankedCurrencies = {
+        { key = "BankedGold", label = "Banked Gold" },
+        { key = "BankedAlliancePoints", label = "Banked Alliance Points" },
+        { key = "BankedTelVar", label = "Banked Tel Var Stones" },
+        { key = "BankedWritVouchers", label = "Banked Writ Vouchers" },
+    }
 
-        -- Helper function to create a toggle button
-        local toggleControls = {} -- Store references to toggle buttons for reset functionality
-        local function CreateToggle(parent, x, y, label, key)
-            -- Container for consistent alignment
-            local container = WINDOW_MANAGER:CreateControl(nil, parent, CT_CONTROL)
-            container:SetDimensions(360, 30)
-            container:SetAnchor(TOPLEFT, parent, TOPLEFT, x, y)
+    local utilities = {
+        { key = "BagSpace", label = "Bag Space" },
+        { key = "BankSpace", label = "Bank Space" },
+    }
 
-            -- Label
-            local toggleLabel = WINDOW_MANAGER:CreateControl(nil, container, CT_LABEL)
-            toggleLabel:SetAnchor(LEFT, container, LEFT, 10, 0)
-            toggleLabel:SetFont("ZoFontGameSmall")
-            toggleLabel:SetText(label)
-
-            -- Toggle button
-            local toggleButton = WINDOW_MANAGER:CreateControl(nil, container, CT_BUTTON)
-            toggleButton:SetDimensions(60, 20)
-            toggleButton:SetAnchor(RIGHT, container, RIGHT, -10, 0)
-            toggleButton:SetFont("ZoFontGameSmall")
-            toggleButton:SetText(self.savedVariables.displaySettings[key] and "|c00FF00ON|r" or "|cFF0000OFF|r")
-            toggleButton.key = key -- Save the key for reset functionality
-            toggleButton:SetHandler("OnClicked", function()
-                -- Toggle the setting and update UI
-                self.savedVariables.displaySettings[key] = not self.savedVariables.displaySettings[key]
-                toggleButton:SetText(self.savedVariables.displaySettings[key] and "|c00FF00ON|r" or "|cFF0000OFF|r")
+    -- Player Currencies
+    table.insert(optionsData, { type = "header", name = "Player Currencies" })
+    for _, item in ipairs(playerCurrencies) do
+        table.insert(optionsData, {
+            type = "checkbox",
+            name = item.label,
+            getFunc = function() return self.savedVariables.displaySettings[item.key] end,
+            setFunc = function(value)
+                self.savedVariables.displaySettings[item.key] = value
                 self:UpdateUI()
-            end)
+            end,
+            default = true,
+        })
+    end
 
-            -- Store toggle button reference
-            toggleControls[key] = toggleButton
-        end
+    -- Banked Currencies
+    table.insert(optionsData, { type = "header", name = "Banked Currencies" })
+    for _, item in ipairs(bankedCurrencies) do
+        table.insert(optionsData, {
+            type = "checkbox",
+            name = item.label,
+            getFunc = function() return self.savedVariables.displaySettings[item.key] end,
+            setFunc = function(value)
+                self.savedVariables.displaySettings[item.key] = value
+                self:UpdateUI()
+            end,
+            default = true,
+        })
+    end
 
-        -- Define sections and toggles
-        local playerCurrencies = {
-            { key = CURT_MONEY, label = "Gold" },
-            { key = CURT_ALLIANCE_POINTS, label = "Alliance Points" },
-            { key = CURT_TELVAR_STONES, label = "Tel Var Stones" },
-            { key = CURT_EVENT_TICKETS, label = "Event Tickets" },
-            { key = CURT_UNDAUNTED_KEYS, label = "Undaunted Keys" },
-            { key = CURT_CHAOTIC_CREATIA, label = "Transmute Crystals" },
-            { key = CURT_CROWN_GEMS, label = "Crown Gems" },
-            { key = CURT_IMPERIAL_FRAGMENTS, label = "Imperial Fragments" },
-            { key = CURT_ENDEAVOR_SEALS, label = "Seals of Endeavor" },
-            { key = CURT_WRIT_VOUCHERS, label = "Writ Vouchers" },
-            { key = CURT_ARCHIVAL_FORTUNES, label = "Archival Fortunes" },
-            { key = CURT_CROWNS, label = "Crowns" },
-        }
+    -- Utilities
+    table.insert(optionsData, { type = "header", name = "Utilities" })
+    for _, item in ipairs(utilities) do
+        table.insert(optionsData, {
+            type = "checkbox",
+            name = item.label,
+            getFunc = function() return self.savedVariables.displaySettings[item.key] end,
+            setFunc = function(value)
+                self.savedVariables.displaySettings[item.key] = value
+                self:UpdateUI()
+            end,
+            default = true,
+        })
+    end
 
-        local bankedCurrencies = {
-            { key = "BankedGold", label = "Banked Gold" },
-            { key = "BankedAlliancePoints", label = "Banked Alliance Points" },
-            { key = "BankedTelVar", label = "Banked Tel Var Stones" },
-            { key = "BankedWritVouchers", label = "Banked Writ Vouchers" },
-        }
-
-        local utilities = {
-            { key = "BagSpace", label = "Bag Space" },
-            { key = "BankSpace", label = "Bank Space" },
-        }
-
-        -- Add toggles for each section with headings
-        local startY = 50
-        local offsetY = 30
-
-        -- Player Currency Heading
-        local playerHeading = WINDOW_MANAGER:CreateControl(nil, RanckorsBaggageSettingsWindow, CT_LABEL)
-        playerHeading:SetAnchor(TOPLEFT, RanckorsBaggageSettingsWindow, TOPLEFT, 20, startY)
-        playerHeading:SetFont("ZoFontGameBold")
-        playerHeading:SetText("|cCCCCCCPlayer Currencies|r")
-        startY = startY + offsetY
-
-        for _, item in ipairs(playerCurrencies) do
-            CreateToggle(RanckorsBaggageSettingsWindow, 20, startY, item.label, item.key)
-            startY = startY + offsetY
-        end
-
-        -- Banked Currency Heading
-        local bankedHeading = WINDOW_MANAGER:CreateControl(nil, RanckorsBaggageSettingsWindow, CT_LABEL)
-        bankedHeading:SetAnchor(TOPLEFT, RanckorsBaggageSettingsWindow, TOPLEFT, 20, startY)
-        bankedHeading:SetFont("ZoFontGameBold")
-        bankedHeading:SetText("|cCCCCCCBanked Currencies|r")
-        startY = startY + offsetY
-
-        for _, item in ipairs(bankedCurrencies) do
-            CreateToggle(RanckorsBaggageSettingsWindow, 20, startY, item.label, item.key)
-            startY = startY + offsetY
-        end
-
-        -- Utilities Heading
-        local utilitiesHeading = WINDOW_MANAGER:CreateControl(nil, RanckorsBaggageSettingsWindow, CT_LABEL)
-        utilitiesHeading:SetAnchor(TOPLEFT, RanckorsBaggageSettingsWindow, TOPLEFT, 20, startY)
-        utilitiesHeading:SetFont("ZoFontGameBold")
-        utilitiesHeading:SetText("|cCCCCCCUtilities|r")
-        startY = startY + offsetY
-
-        for _, item in ipairs(utilities) do
-            CreateToggle(RanckorsBaggageSettingsWindow, 20, startY, item.label, item.key)
-            startY = startY + offsetY
-        end
-
-        -- Add Reset Button
-        local resetButton = WINDOW_MANAGER:CreateControl("$(parent)ResetButton", RanckorsBaggageSettingsWindow, CT_BUTTON)
-        resetButton:SetAnchor(BOTTOMRIGHT, RanckorsBaggageSettingsWindow, BOTTOMRIGHT, -20, -20)
-        resetButton:SetDimensions(120, 40)
-        resetButton:SetFont("ZoFontWinH3")
-        resetButton:SetText("|cFFD700Reset|r")
-        resetButton:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
-        resetButton:SetVerticalAlignment(TEXT_ALIGN_CENTER)
-        resetButton:SetHandler("OnClicked", function()
-            -- Reset all settings to default
+    -- Reset Button
+    table.insert(optionsData, {
+        type = "button",
+        name = "Reset All to ON",
+        func = function()
             for _, item in ipairs(playerCurrencies) do
                 self.savedVariables.displaySettings[item.key] = true
             end
@@ -270,49 +249,38 @@ function RanckorsBaggage:CreateSettingsWindow()
             for _, item in ipairs(utilities) do
                 self.savedVariables.displaySettings[item.key] = true
             end
-            -- Update toggle button text
-            for key, toggle in pairs(toggleControls) do
-                toggle:SetText("|c00FF00ON|r")
-            end
             self:UpdateUI()
-        end)
+        end,
+        width = "half",
+        warning = "Resets all toggles to ON state.",
+    })
 
-        -- Add a Theme toggle button
-    local themeButton = WINDOW_MANAGER:CreateControl("$(parent)ThemeButton", RanckorsBaggageSettingsWindow, CT_BUTTON)
-    themeButton:SetAnchor(BOTTOMLEFT, RanckorsBaggageSettingsWindow, BOTTOMLEFT, 20, -20) -- Position it in line with the Reset button
-    themeButton:SetDimensions(120, 40)
-    themeButton:SetFont("ZoFontWinH3")
-    themeButton:SetHorizontalAlignment(TEXT_ALIGN_CENTER)
-    themeButton:SetVerticalAlignment(TEXT_ALIGN_CENTER)
+    -- Theme Button
+    table.insert(optionsData, {
+    type = "dropdown",
+    name = "Theme Style",
+    tooltip = "Choose the background style for the display window.",
+    choices = { "Clear", "Dark" },
+    getFunc = function()
+        return string.ucfirst(self.savedVariables.backgroundStyle or "Dark")
+    end,
+    setFunc = function(choice)
+        local style = string.lower(choice)
+        self:SetBackgroundStyle(style)
 
-    -- Update the button text based on the current theme
-    local function UpdateThemeButtonText()
-        themeButton:SetText("|cFFD700Theme: " .. string.upper(self.savedVariables.backgroundStyle) .. "|r")
-    end
+        if IsValidRanckorsBaggageWindow() then
+            local background = RanckorsBaggageWindow:GetNamedChild("BG")
+            if background then
+                self:ApplyBackgroundStyle(background)
+            end
+        end
+    end,
+    default = "Clear",
+    width = "half",
+    })
 
-    -- Set the button's click handler to toggle the theme
-    themeButton:SetHandler("OnClicked", function()
-        -- Toggle between "clear" and "dark" themes
-        local newStyle = (self.savedVariables.backgroundStyle == "clear") and "dark" or "clear"
-        self:SetBackgroundStyle(newStyle)
-        UpdateThemeButtonText()
-    end)
-
-    -- Initialize the button's text
-    UpdateThemeButtonText()
-
-    end
+    LAM:RegisterOptionControls("RanckorsBaggageSettings", optionsData)
 end
-
-
--- Settings toggle
-function RanckorsBaggage:ToggleSettingsWindow()
-    if not RanckorsBaggageSettingsWindow then
-        self:CreateSettingsWindow()
-    end
-    RanckorsBaggageSettingsWindow:SetHidden(not RanckorsBaggageSettingsWindow:IsHidden())
-end
-
 
 
 -- Function to apply the background style
@@ -345,7 +313,7 @@ function RanckorsBaggage:SetBackgroundStyle(style)
     end
 end
 
--- Removes the addon from view when opening a menu such as Map, B
+-- Removes the addon from view when opening a menu such as Map,
 -- Event handler for action layer pushed (UI layer opened)
 function RanckorsBaggage:OnActionLayerPushed(event, layerIndex, activeLayerIndex)
     if layerIndex == 2 or layerIndex == 3 or layerIndex == 4 or layerIndex == 6 then -- Add specific layers as needed
@@ -385,7 +353,6 @@ function RanckorsBaggage:SavePosition()
     end
 end
 
-
 -- Helper function to safely get a currency amount or return nil if invalid
 RanckorsBaggage.hasShownCurrencyWarning = false
 
@@ -409,7 +376,6 @@ function RanckorsBaggage:GetCurrencySafely(currencyType, currencyLocation)
     return amount
 end
 
-
 -- Function to format numbers with commas
 function RanckorsBaggage:FormatNumberWithCommas(number)
     return tostring(number):reverse():gsub("(%d%d%d)", "%1,"):gsub(",(%-?)$", "%1"):reverse()
@@ -431,17 +397,14 @@ function RanckorsBaggage:UpdateCurrencyData()
     self.writVouchers = self:GetCurrencySafely(CURT_WRIT_VOUCHERS, CURRENCY_LOCATION_CHARACTER)
     self.archivalFortunes = self:GetCurrencySafely(CURT_ARCHIVAL_FORTUNES, CURRENCY_LOCATION_ACCOUNT)
     self.crowns = self:GetCurrencySafely(CURT_CROWNS, CURRENCY_LOCATION_ACCOUNT)
-
     -- Bag Information
     self.currentBagSpace = GetNumBagUsedSlots(BAG_BACKPACK)
     self.maxBagSpace = GetBagSize(BAG_BACKPACK)
-
     -- Bank-held currencies
     self.bankedGold = self:GetCurrencySafely(CURT_MONEY, CURRENCY_LOCATION_BANK)
     self.bankedAlliancePoints = self:GetCurrencySafely(CURT_ALLIANCE_POINTS, CURRENCY_LOCATION_BANK)
     self.bankedTelVar = self:GetCurrencySafely(CURT_TELVAR_STONES, CURRENCY_LOCATION_BANK)
     self.bankedWritVouchers = self:GetCurrencySafely(CURT_WRIT_VOUCHERS, CURRENCY_LOCATION_BANK)
-
     -- Bank information
     local currentBankUsed = GetNumBagUsedSlots(BAG_BANK)
     local maxBankSize = GetBagSize(BAG_BANK)
@@ -581,10 +544,6 @@ function RanckorsBaggage:UpdateUI()
         d("Error: RanckorsBaggageWindowLabel is nil.")
     end
 end
-
-
-
-
 
 -- Function to check if the window is valid
 function IsValidRanckorsBaggageWindow()
