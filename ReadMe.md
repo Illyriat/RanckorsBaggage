@@ -1,4 +1,7 @@
 # Ranckors Baggage
+
+![Version](https://img.shields.io/badge/version-v2.0.2-blue)  ![License: All Rights Reserved](https://img.shields.io/badge/license-All--Rights--Reserved-red)  ![Usage: No Redistribution](https://img.shields.io/badge/Usage-No%20Redistribution-red)
+
 #### View your currenices in a convenitent UI panel without having to navigate through your inventory menus.
 
 #### Movable panel can be placed where it is most suitable for the player and then saved to the new position. With a Clear and Dark Theme to suit you personal need on screen, and fully customisable with the display options of the curreny to view exactly what you want it too.
