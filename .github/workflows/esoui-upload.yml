@@ -41,10 +41,24 @@ jobs:
         run: |
           set -euo pipefail
           echo "Updating to VERSION=${VERSION}"
-          sed -i -E "s/version-v[0-9]+\.[0-9]+\.[0-9]+/version-${VERSION}/" README.md
-          if git diff --quiet -- README.md; then
-            echo "No version string matched in README.md" >&2
-            grep -n -i 'version' README.md || true
+
+          # Find README.md (case-insensitive) tracked by git
+          FILE=$(git ls-files | awk 'tolower($0)=="readme.md"{print; exit}')
+          if [ -z "${FILE:-}" ]; then
+            FILE=$(git ls-files | grep -i '^readme\.md$' | head -n1 || true)
+          fi
+          if [ -z "${FILE:-}" ]; then
+            echo "README.md not found in repo root. Candidates:" >&2
+            git ls-files | grep -i readme || true
+            exit 1
+          fi
+          echo "Target file: $FILE"
+
+          sed -i -E "s/version-v[0-9]+\.[0-9]+\.[0-9]+/version-${VERSION}/" "$FILE"
+
+          if git diff --quiet -- "$FILE"; then
+            echo "No version string matched in $FILE" >&2
+            grep -n -i 'version' "$FILE" || true
             exit 1
           fi
 
