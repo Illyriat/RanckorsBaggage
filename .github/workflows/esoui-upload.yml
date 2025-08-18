@@ -11,6 +11,9 @@ on:
       - '.github/**'
       - '*.md'
 
+permissions:
+  contents: write
+
 jobs:
   upload:
     runs-on: ubuntu-latest
