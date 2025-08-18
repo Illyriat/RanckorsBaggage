@@ -28,7 +28,7 @@ jobs:
         with:
           api_key: ${{ secrets.ESOUI_ADDON_UPDATE }}
           addon_id: 3933
-          version: v2.0.2
+          version: v2.0.4
           zip_file: RanckorsBaggage.zip
           changelog_file: CHANGELOG.txt
 
