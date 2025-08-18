@@ -17,30 +17,38 @@ permissions:
 jobs:
   upload:
     runs-on: ubuntu-latest
+    env:
+      VERSION: v2.0.4
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Zip addon folder
-        run: |
-          zip -r RanckorsBaggage.zip RanckorsBaggage
-
+        run: zip -r RanckorsBaggage.zip RanckorsBaggage
 
       - name: Upload to ESOUI
+        if: false
         uses: m00nyONE/esoui-upload@v1
         with:
           api_key: ${{ secrets.ESOUI_ADDON_UPDATE }}
           addon_id: 3933
-          version: v2.0.4
+          version: ${{ env.VERSION }}
           zip_file: RanckorsBaggage.zip
           changelog_file: CHANGELOG.txt
 
       - name: Update version badge in README
         run: |
+          set -euo pipefail
+          echo "Updating to VERSION=${VERSION}"
           sed -i -E "s/version-v[0-9]+\.[0-9]+\.[0-9]+/version-${VERSION}/" README.md
+          if git diff --quiet -- README.md; then
+            echo "No version string matched in README.md" >&2
+            grep -n -i 'version' README.md || true
+            exit 1
+          fi
 
       - name: Commit README change
         uses: EndBug/add-and-commit@v9
         with:
-          add:      README.md
-          message:  "docs: bump README to ${VERSION} [skip ci]"
+          add: README.md
+          message: "docs: bump README to ${VERSION} [skip ci]"
