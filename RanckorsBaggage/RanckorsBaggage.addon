@@ -1,7 +1,7 @@
 ## Title: Ranckors Baggage
-## APIVersion: 101046
-## Version: 2.0.2
-## AddonVersion: 2.0.2
+## APIVersion: 101046 101047
+## Version: 2.0.4
+## AddonVersion: 2.0.4
 ## Author: |c4B8BFERanckor90|r
 ## Description: Displays the player's available currencies and available bag/bank space slots.
 ## DependsOn: LibAddonMenu-2.0>=35

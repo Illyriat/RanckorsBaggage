@@ -1,3 +1,9 @@
+Version 2.0.4
+- UI Scaling for both PC & Console.
+- Scaling & Position can now be managed in settings to be GamePad friendly.
+- Code Refactor to improve performance.
+- ESO Update 101047 supported.
+
 Version 2.0.2
 - Moved Settings to LibAddonMenu dependency
 - Refactored some code to reduce file size
