@@ -1,6 +1,6 @@
 # Ranckors Baggage
 
-![Version](https://img.shields.io/badge/version-v2.0.2-blue)  ![License: All Rights Reserved](https://img.shields.io/badge/license-All--Rights--Reserved-red)  ![Usage: No Redistribution](https://img.shields.io/badge/Usage-No%20Redistribution-red)
+![Version](https://img.shields.io/badge/version-v2.0.4-blue)  ![License: All Rights Reserved](https://img.shields.io/badge/license-All--Rights--Reserved-red)  ![Usage: No Redistribution](https://img.shields.io/badge/Usage-No%20Redistribution-red)
 
 #### View your currenices in a convenitent UI panel without having to navigate through your inventory menus.
 
