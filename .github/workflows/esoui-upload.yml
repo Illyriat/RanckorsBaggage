@@ -62,5 +62,5 @@ jobs:
       - name: Commit README change
         uses: EndBug/add-and-commit@v9
         with:
-          add: ${{ env.README_FILE }}                 # <-- use the actual file
+          add: ${{ env.README_FILE }}
           message: "docs: bump README to ${VERSION} [skip ci]"
