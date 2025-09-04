@@ -2,7 +2,6 @@ name: "🐞 Bug Report"
 description: Report a bug or unexpected behavior in the addon
 title: "[Bug] <summary of the problem>"
 labels: [bug]
-type: issue
 body:
   - type: textarea
     attributes:
@@ -37,15 +36,15 @@ body:
   - type: input
     attributes:
       label: Addon version
-      placeholder: e.g. RanckorsBaggage v1.0.3
+      placeholder: e.g. RanckorsBaggage v2.0.4
 
   - type: dropdown
     attributes:
       label: ESO Plus Subscription active?
       options:
-        - Yes
-        - No
-        - Unsure
+        - "Yes"
+        - "No"
+        - "Unsure"
 
   - type: textarea
     attributes:
