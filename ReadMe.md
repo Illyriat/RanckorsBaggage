@@ -1,6 +1,8 @@
 # Ranckors Baggage
 
-![Version](https://img.shields.io/badge/version-v2.0.4-blue)  ![License: All Rights Reserved](https://img.shields.io/badge/license-All--Rights--Reserved-red)  ![Usage: No Redistribution](https://img.shields.io/badge/Usage-No%20Redistribution-red)
+![Version](https://img.shields.io/badge/version-v2.0.4-blue)  ![License: All Rights Reserved](https://img.shields.io/badge/license-All--Rights--Reserved-red)  ![Usage: No Redistribution](https://img.shields.io/badge/Usage-No%20Redistribution-red)  ![Ranckors Baggage](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fillyriat.com%2Fbadges%2Fdownloads.json&query=%24.esoui.addons%5B%22ranckors-baggage%22%5D.total_str&label=ESOUI%20Downloads&color=blue&cacheSeconds=3600)
+
+
 
 #### View your currenices in a convenitent UI panel without having to navigate through your inventory menus.
 
